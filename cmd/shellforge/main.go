@@ -47,7 +47,7 @@ cmdReport(repo)
 case "run":
 if len(os.Args) < 3 {
 fmt.Fprintln(os.Stderr, "Usage: shellforge run <driver> \"prompt\"")
-fmt.Fprintln(os.Stderr, "Drivers: aider, claude, copilot, codex, gemini")
+fmt.Fprintln(os.Stderr, "Drivers: goose, claude, copilot, codex, gemini")
 os.Exit(1)
 }
 driver := os.Args[2]
@@ -272,22 +272,27 @@ fmt.Println()
 steps++
 fmt.Printf("── Step %d/%d: Agent drivers ──\n", steps, total)
 
-// On Mac/GPU: offer Aider (local models via Ollama). On server: skip, show API drivers.
+// On Mac/GPU: offer Goose (local models via Ollama). On server: skip, show API drivers.
 if !isServer {
-if _, err := exec.LookPath("aider"); err != nil {
-fmt.Println("  Aider — AI coding agent with native Ollama support (local models)")
-fmt.Print("  Install Aider? [Y/n] ")
+if _, err := exec.LookPath("goose"); err != nil {
+fmt.Println("  Goose — AI agent with native Ollama support (actually executes tools)")
+fmt.Print("  Install Goose? [Y/n] ")
 if confirm(reader) {
-fmt.Println("  → Installing Aider...")
-run("pip3", "install", "aider-chat")
-if _, err := exec.LookPath("aider"); err == nil {
-fmt.Println("  ✓ Aider installed")
+fmt.Println("  → Installing Goose...")
+if runtime.GOOS == "darwin" {
+run("brew", "install", "--cask", "block-goose")
 } else {
-fmt.Println("  ⚠ Install failed — try: pip3 install aider-chat")
+run("sh", "-c", "curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | bash")
+}
+if _, err := exec.LookPath("goose"); err == nil {
+fmt.Println("  ✓ Goose installed")
+fmt.Println("  → Run 'goose configure' to set up Ollama provider")
+} else {
+fmt.Println("  ⚠ Install failed — try: brew install --cask block-goose")
 }
 }
 } else {
-fmt.Println("  ✓ Aider installed (local model driver)")
+fmt.Println("  ✓ Goose installed (local model driver)")
 }
 }
 
@@ -374,8 +379,8 @@ fmt.Println("    shellforge swarm                      # start Dagu dashboard")
 fmt.Println("    dagu start dags/multi-driver-swarm.yaml")
 } else {
 fmt.Println("  Quick start:")
-fmt.Println("    shellforge agent \"describe this project\"")
-fmt.Println("    shellforge run crush \"find test gaps\"")
+fmt.Println("    shellforge run goose \"describe this project\"")
+fmt.Println("    goose configure                       # set up Ollama if not done")
 fmt.Println()
 fmt.Println("  Run a swarm:")
 fmt.Println("    shellforge swarm                      # start Dagu dashboard")
@@ -496,14 +501,10 @@ var drivers = map[string]driverConfig{
 		hasHooks:    false,
 		initHint:    "agentguard gemini-init",
 	},
-	"aider": {
-		binary: "aider",
+	"goose": {
+		binary: "goose",
 		buildCmd: func(p string) []string {
-			model := os.Getenv("OLLAMA_MODEL")
-			if model == "" {
-				model = ollama.Model
-			}
-			return []string{"--model", "ollama/" + model, "--yes-always", "--no-git", "--message", p}
+			return []string{"run", "--no-session", "-t", p}
 		},
 		interactive: []string{},
 		hasHooks:    false,

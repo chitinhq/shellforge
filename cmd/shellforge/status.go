@@ -63,7 +63,7 @@ func cmdStatusFull() {
 		desc    string
 		install string
 	}{
-		{"aider", "aider", "AI coding agent with native Ollama support", "pip3 install aider-chat"},
+		{"goose", "goose", "AI agent with native Ollama support (Block)", "brew install --cask block-goose"},
 		{"claude", "claude", "Claude Code CLI", "npm i -g @anthropic-ai/claude-code"},
 		{"copilot", "github-copilot-cli", "GitHub Copilot CLI", "gh extension install github/gh-copilot"},
 		{"codex", "codex", "OpenAI Codex CLI", "npm i -g @openai/codex"},
