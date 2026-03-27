@@ -562,38 +562,56 @@
   </div>
 </section>
 
-<!-- ─── Agents ─── -->
+<!-- ─── Drivers ─── -->
 <section class="agents-section" id="agents">
   <div class="container">
-    <h2 class="section-title">Built-in Agents</h2>
-    <p class="section-sub">Simple, deterministic, bounded. Each one does one thing well.</p>
+    <h2 class="section-title">Governed Drivers</h2>
+    <p class="section-sub">One governance policy. Any CLI agent. Every tool call checked.</p>
     <table>
       <thead>
         <tr>
-          <th>Agent</th>
+          <th>Driver</th>
           <th>Command</th>
-          <th>Output</th>
-          <th>Type</th>
+          <th>Model</th>
+          <th>Status</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td><strong>qa</strong></td>
-          <td><code>./shellforge qa</code></td>
-          <td>Test suggestions + findings</td>
-          <td><span class="tag tag-green">analysis</span></td>
+          <td><strong>Crush</strong></td>
+          <td><code>shellforge run crush</code></td>
+          <td>Local (Ollama)</td>
+          <td><span class="tag tag-green">governed</span></td>
         </tr>
         <tr>
-          <td><strong>report</strong></td>
-          <td><code>./shellforge report</code></td>
-          <td>Markdown status report</td>
-          <td><span class="tag tag-blue">reporting</span></td>
+          <td><strong>Claude Code</strong></td>
+          <td><code>shellforge run claude</code></td>
+          <td>Claude API</td>
+          <td><span class="tag tag-green">governed</span></td>
         </tr>
         <tr>
-          <td><strong>agent</strong></td>
-          <td><code>./shellforge agent</code></td>
-          <td>Code generation + task execution</td>
-          <td><span class="tag tag-purple">generation</span></td>
+          <td><strong>Copilot CLI</strong></td>
+          <td><code>shellforge run copilot</code></td>
+          <td>GitHub Copilot</td>
+          <td><span class="tag tag-green">governed</span></td>
+        </tr>
+        <tr>
+          <td><strong>Codex CLI</strong></td>
+          <td><code>shellforge run codex</code></td>
+          <td>OpenAI</td>
+          <td><span class="tag tag-blue">coming soon</span></td>
+        </tr>
+        <tr>
+          <td><strong>Gemini CLI</strong></td>
+          <td><code>shellforge run gemini</code></td>
+          <td>Google</td>
+          <td><span class="tag tag-blue">coming soon</span></td>
+        </tr>
+        <tr>
+          <td><strong>Built-in</strong></td>
+          <td><code>shellforge agent</code></td>
+          <td>Local (Ollama)</td>
+          <td><span class="tag tag-green">works now</span></td>
         </tr>
       </tbody>
     </table>
