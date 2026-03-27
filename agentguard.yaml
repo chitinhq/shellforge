@@ -1,7 +1,7 @@
 # ShellForge — AgentGuard Governance Policy
 # Mode: monitor (log but don't block) — switch to enforce when ready
 
-mode: monitor
+mode: enforce
 
 policies:
   - name: no-force-push
@@ -16,9 +16,9 @@ policies:
     description: Block recursive force deletion
     match:
       command: "rm"
-      args_contain: ["-rf", "-fr"]
+      args_contain: ["-rf", "-fr", "--recursive --force", "--force --recursive", "-r -f", "-f -r"]
     action: deny
-    message: "Destructive rm -rf blocked by policy"
+    message: "Destructive rm blocked by policy"
 
   - name: file-write-constraints
     description: Agents may only write to outputs/ and agents' own workspace
@@ -39,6 +39,8 @@ policies:
 
   - name: bounded-execution
     description: Agents must exit within timeout
+    match:
+      command: "*"
     timeout_seconds: 300
     action: deny
     message: "Agent exceeded 5-minute execution limit"

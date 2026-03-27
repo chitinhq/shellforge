@@ -90,8 +90,12 @@ export async function isOllamaRunning(): Promise<boolean> {
  * @returns Array of model name strings, or an empty array if the request fails.
  */
 export async function listModels(): Promise<string[]> {
-  const res = await fetch(`${OLLAMA_HOST}/api/tags`);
-  if (!res.ok) return [];
-  const data = await res.json() as { models: { name: string }[] };
-  return data.models.map(m => m.name);
+  try {
+    const res = await fetch(`${OLLAMA_HOST}/api/tags`);
+    if (!res.ok) return [];
+    const data = await res.json() as { models: { name: string }[] };
+    return data.models.map(m => m.name);
+  } catch {
+    return [];
+  }
 }

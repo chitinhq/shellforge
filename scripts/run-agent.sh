@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # run-agent.sh — Generic agent runner with AgentGuard governance
 # Usage: run-agent.sh <agent-name> [extra args...]
-set -uo pipefail
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"

@@ -31,8 +31,18 @@ async function main() {
     process.exit(0);
   }
 
-  // Limit to first 5 files to stay within context budget
-  const batch = files.slice(0, 5);
+  // Limit to first 5 files, skip files over 50KB to stay within context budget
+  const MAX_FILE_SIZE = 50 * 1024; // 50KB
+  const batch = files
+    .filter(f => {
+      const size = statSync(f).size;
+      if (size > MAX_FILE_SIZE) {
+        console.log(`[qa-agent] skipping ${f} (${Math.round(size / 1024)}KB > 50KB limit)`);
+        return false;
+      }
+      return true;
+    })
+    .slice(0, 5);
   const code = batch.map(f => `--- ${f} ---\n${readFileSync(f, 'utf8')}`).join('\n\n');
 
   const prompt = `Analyze these source files and suggest specific test cases for each.\n\n${code}`;
