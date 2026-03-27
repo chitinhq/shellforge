@@ -57,10 +57,20 @@ echo "✓ Ollama $(ollama --version 2>/dev/null || echo 'installed')"
 # 4. Start Ollama if not running
 if ! curl -sf http://localhost:11434/api/tags &>/dev/null; then
   echo "→ Starting Ollama..."
-  ollama serve &>/dev/null &
-  sleep 3
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS: Ollama runs as a desktop app
+    open -a Ollama 2>/dev/null || ollama serve &>/dev/null &
+    echo "  Waiting for Ollama to start..."
+    for i in {1..10}; do
+      sleep 2
+      curl -sf http://localhost:11434/api/tags &>/dev/null && break
+    done
+  else
+    ollama serve &>/dev/null &
+    sleep 3
+  fi
   if ! curl -sf http://localhost:11434/api/tags &>/dev/null; then
-    echo "  WARNING: Ollama didn't start. Run 'ollama serve' manually."
+    echo "  WARNING: Ollama didn't start. Open the Ollama app or run 'ollama serve'."
   else
     echo "✓ Ollama running"
   fi
