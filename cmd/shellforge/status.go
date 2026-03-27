@@ -1,128 +1,158 @@
 package main
 
 import (
-"fmt"
-"os/exec"
-"strings"
+	"fmt"
+	"os/exec"
+	"strings"
 
-"github.com/AgentGuardHQ/shellforge/internal/governance"
-"github.com/AgentGuardHQ/shellforge/internal/integration"
-"github.com/AgentGuardHQ/shellforge/internal/ollama"
+	"github.com/AgentGuardHQ/shellforge/internal/governance"
+	"github.com/AgentGuardHQ/shellforge/internal/ollama"
 )
 
 func cmdStatusFull() {
-fmt.Printf("ShellForge %s — Full Ecosystem Status\n", version)
-fmt.Println(strings.Repeat("─", 50))
+	fmt.Printf("ShellForge %s — Ecosystem Status\n", version)
+	fmt.Println(strings.Repeat("─", 50))
 
-// ── Model Layer ──
-fmt.Println("\n🦙 Model Layer")
-if ollama.IsRunning() {
-models, _ := ollama.ListModels()
-fmt.Printf("  ✓ Ollama: running (%d models)\n", len(models))
-for _, m := range models {
-tag := ""
-if m == ollama.Model {
-tag = " ← active"
-}
-fmt.Printf("    • %s%s\n", m, tag)
-}
-} else {
-fmt.Println("  ✗ Ollama: not running (start: ollama serve)")
+	healthy := 0
+	total := 0
+
+	// ── Ollama ──
+	total++
+	fmt.Println("\n🦙 Ollama (local inference)")
+	if ollama.IsRunning() {
+		healthy++
+		models, _ := ollama.ListModels()
+		fmt.Printf("  ✓ running (%d models loaded)\n", len(models))
+		for _, m := range models {
+			tag := ""
+			if m == ollama.Model {
+				tag = " ← active"
+			}
+			fmt.Printf("    • %s%s\n", m, tag)
+		}
+	} else {
+		fmt.Println("  ✗ not running")
+		fmt.Println("    → ollama serve")
+	}
+
+	// ── Governance ──
+	total++
+	fmt.Println("\n🛡️  AgentGuard (governance)")
+	configPath := findGovernanceConfig()
+	if configPath != "" {
+		eng, err := governance.NewEngine(configPath)
+		if err != nil {
+			fmt.Printf("  ✗ config error: %s\n", err)
+		} else {
+			healthy++
+			fmt.Printf("  ✓ mode=%s, %d policies (%s)\n", eng.Mode, len(eng.Policies), configPath)
+			for _, p := range eng.Policies {
+				fmt.Printf("    • %s [%s]\n", p.Name, p.Action)
+			}
+		}
+	} else {
+		fmt.Println("  ✗ no agentguard.yaml found")
+		fmt.Println("    → shellforge setup")
+	}
+
+	// ── Drivers ──
+	fmt.Println("\n💻 Agent Drivers")
+	drivers := []struct {
+		name    string
+		bin     string
+		desc    string
+		install string
+	}{
+		{"crush", "crush", "Charm AI coding agent (Go, TUI + headless)", "brew install charmbracelet/tap/crush"},
+		{"claude", "claude", "Claude Code CLI", "npm i -g @anthropic-ai/claude-code"},
+		{"copilot", "github-copilot-cli", "GitHub Copilot CLI", "gh extension install github/gh-copilot"},
+		{"codex", "codex", "OpenAI Codex CLI", "npm i -g @openai/codex"},
+		{"gemini", "gemini", "Google Gemini CLI", "npm i -g @anthropic-ai/gemini-cli"},
+	}
+	driverCount := 0
+	for _, d := range drivers {
+		total++
+		if _, err := exec.LookPath(d.bin); err == nil {
+			healthy++
+			driverCount++
+			fmt.Printf("  ✓ %s: installed (%s)\n", d.name, d.desc)
+		} else {
+			fmt.Printf("  ○ %s: not found (%s)\n", d.name, d.install)
+		}
+	}
+	if driverCount == 0 {
+		fmt.Println("  → Install at least one driver, or use: shellforge agent \"prompt\"")
+	}
+
+	// ── Orchestration ──
+	total++
+	fmt.Println("\n📋 Dagu (orchestration)")
+	if _, err := exec.LookPath("dagu"); err == nil {
+		healthy++
+		fmt.Println("  ✓ installed")
+		fmt.Println("    → dagu server --dags=./dags   (web UI at :8080)")
+	} else {
+		fmt.Println("  ○ not installed")
+		if isdarwin() {
+			fmt.Println("    → brew install dagu")
+		} else {
+			fmt.Println("    → curl -sL https://raw.githubusercontent.com/dagu-org/dagu/main/scripts/installer.sh | bash")
+		}
+	}
+
+	// ── RTK ──
+	total++
+	fmt.Println("\n⚡ RTK (token compression)")
+	if _, err := exec.LookPath("rtk"); err == nil {
+		healthy++
+		fmt.Println("  ✓ installed (70-90% savings on shell output)")
+	} else {
+		fmt.Println("  ○ not installed (optional)")
+		fmt.Println("    → npm i -g @anthropic/rtk")
+	}
+
+	// ── OpenShell ──
+	total++
+	fmt.Println("\n🔒 OpenShell (sandbox)")
+	if _, err := exec.LookPath("openshell"); err == nil {
+		healthy++
+		fmt.Println("  ✓ installed (kernel-level isolation)")
+	} else {
+		dockerOk := false
+		if _, err := exec.LookPath("docker"); err == nil {
+			dockerOk = true
+		}
+		if dockerOk {
+			fmt.Println("  ○ not installed, but Docker available (partial sandbox)")
+		} else {
+			fmt.Println("  ○ not installed (optional)")
+		}
+		fmt.Println("    → https://github.com/NVIDIA/OpenShell")
+	}
+
+	// ── DefenseClaw ──
+	total++
+	fmt.Println("\n🐾 DefenseClaw (supply chain scanner)")
+	if _, err := exec.LookPath("defenseclaw"); err == nil {
+		healthy++
+		fmt.Println("  ✓ installed")
+	} else {
+		fmt.Println("  ○ not installed (optional)")
+		fmt.Println("    → https://github.com/cisco-ai-defense/defenseclaw")
+	}
+
+	// ── Summary ──
+	fmt.Println("\n" + strings.Repeat("─", 50))
+	fmt.Printf("Status: %d/%d components active\n", healthy, total)
+	if healthy < 3 {
+		fmt.Println("Run: shellforge setup")
+	}
 }
 
-// ── Token Compression ──
-fmt.Println("\n⚡ Token Compression")
-rtk := integration.NewRTK()
-if rtk.Available() {
-fmt.Printf("  ✓ RTK: %s (60-90%% token savings on shell output)\n", rtk.Version())
-} else {
-fmt.Println("  ○ RTK: not installed (brew install rtk-ai/tap/rtk)")
-}
-
-// ── Memory Optimization ──
-fmt.Println("\n🧠 Memory Optimization")
-tq := integration.NewTurboQuant()
-if tq.Available() {
-fmt.Println("  ✓ TurboQuant: installed (3-bit KV cache, 6x compression)")
-est := tq.EstimateMemory(1.7, 4096)
-fmt.Printf("    qwen3:1.7b → %.1fGB standard, %.1fGB with TQ (%.0f%% savings)\n",
-est.TotalStandard, est.TotalTQ, est.SavingsPercent)
-} else {
-fmt.Println("  ○ TurboQuant: not installed (pip install turboquant-pytorch)")
-}
-
-// ── Governance ──
-fmt.Println("\n🛡️  Governance")
-configPath := findGovernanceConfig()
-if configPath != "" {
-eng, err := governance.NewEngine(configPath)
-if err != nil {
-fmt.Printf("  ✗ Policy: %s\n", err)
-} else {
-fmt.Printf("  ✓ Policy: mode=%s, %d rules (%s)\n", eng.Mode, len(eng.Policies), configPath)
-for _, p := range eng.Policies {
-fmt.Printf("    • %s [%s] %s\n", p.Name, p.Action, p.Description)
-}
-}
-} else {
-fmt.Println("  ✗ Policy: no agentguard.yaml found")
-}
-
-agk := integration.NewAgentGuardKernel()
-if agk.Available() {
-fmt.Printf("  ✓ Kernel: %s (full evaluation — blast radius, personas, invariants)\n", agk.Version())
-} else {
-fmt.Println("  ○ Kernel: built-in YAML evaluator (install kernel for full evaluation)")
-}
-
-// ── Agent Engines ──
-fmt.Println("\n🤖 Agent Engines")
-fmt.Println("  ✓ native: built-in Ollama loop with tool use")
-if _, err := exec.LookPath("opencode"); err == nil {
-fmt.Println("  ✓ opencode: detected (Go-native AI coding agent)")
-} else {
-fmt.Println("  ○ opencode: not installed (npm i -g opencode-ai)")
-}
-checkNodeModule("deepagents", "deepagents", "multi-step planning via LangGraph")
-
-// ── Security ──
-fmt.Println("\n🔒 Security")
-openshell := integration.NewOpenShell()
-if openshell.Available() {
-fmt.Println("  ✓ OpenShell: NVIDIA kernel sandbox (Landlock + Seccomp)")
-} else {
-fmt.Println("  ○ OpenShell: not installed (https://github.com/NVIDIA/OpenShell)")
-}
-
-dc := integration.NewDefenseClaw()
-if dc.Available() {
-fmt.Println("  ✓ DefenseClaw: Cisco supply chain scanner")
-} else {
-fmt.Println("  ○ DefenseClaw: not installed (https://github.com/cisco/defenseclaw)")
-}
-
-// ── Summary ──
-fmt.Println("\n" + strings.Repeat("─", 50))
-available := countAvailable(rtk.Available(), tq.Available(), agk.Available(),
-openshell.Available(), dc.Available())
-fmt.Printf("Stack: %d/8 integrations active\n", 2+available)
-}
-
-func checkNodeModule(pkg, name, desc string) {
-cmd := exec.Command("node", "-e", fmt.Sprintf("require('%s')", pkg))
-if cmd.Run() == nil {
-fmt.Printf("  ✓ %s: installed (%s)\n", name, desc)
-} else {
-fmt.Printf("  ○ %s: not installed (npm i %s)\n", name, pkg)
-}
-}
-
-func countAvailable(flags ...bool) int {
-n := 0
-for _, f := range flags {
-if f {
-n++
-}
-}
-return n
+func isdarwin() bool {
+	out, err := exec.Command("uname").Output()
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(string(out)) == "Darwin"
 }

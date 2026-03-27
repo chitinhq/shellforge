@@ -19,7 +19,7 @@ import (
 "github.com/AgentGuardHQ/shellforge/internal/scheduler"
 )
 
-var version = "0.3.0"
+var version = "0.3.1"
 
 func main() {
 if len(os.Args) < 2 {
@@ -114,7 +114,7 @@ fmt.Println()
 
 reader := bufio.NewReader(os.Stdin)
 steps := 0
-total := 4
+total := 6
 
 // ── Step 1: Ollama ──
 steps++
@@ -251,6 +251,69 @@ fmt.Println("  Skipped (saves 70-90% tokens on shell output)")
 }
 } else {
 fmt.Println("  ✓ RTK installed")
+}
+fmt.Println()
+
+// ── Step 5: Agent drivers ──
+steps++
+fmt.Printf("── Step %d/%d: Agent drivers ──\n", steps, total)
+driverList := []struct {
+name    string
+bin     string
+install string
+desc    string
+}{
+{"Crush", "crush", "brew install charmbracelet/tap/crush", "Go AI coding agent (local models)"},
+{"Claude Code", "claude", "npm i -g @anthropic-ai/claude-code", "Anthropic Claude CLI"},
+{"Copilot CLI", "github-copilot-cli", "gh extension install github/gh-copilot", "GitHub Copilot"},
+{"Codex CLI", "codex", "npm i -g @openai/codex", "OpenAI Codex"},
+{"Gemini CLI", "gemini", "npm i -g @anthropic-ai/gemini-cli", "Google Gemini"},
+}
+installedDrivers := 0
+for _, d := range driverList {
+if _, err := exec.LookPath(d.bin); err == nil {
+fmt.Printf("  ✓ %s installed (%s)\n", d.name, d.desc)
+installedDrivers++
+} else {
+fmt.Printf("  ○ %s not found\n", d.name)
+fmt.Printf("    → %s\n", d.install)
+}
+}
+if installedDrivers == 0 {
+fmt.Println()
+fmt.Println("  No drivers installed. ShellForge's built-in agent still works.")
+fmt.Println("  Install drivers to use: shellforge run claude \"prompt\"")
+}
+fmt.Println()
+
+// ── Step 6: Optional security tools ──
+steps++
+fmt.Printf("── Step %d/%d: Security tools (optional) ──\n", steps, total)
+if _, err := exec.LookPath("defenseclaw"); err != nil {
+fmt.Print("  DefenseClaw (supply chain scanner)? [y/N] ")
+input := readLine(reader)
+if strings.HasPrefix(strings.ToLower(strings.TrimSpace(input)), "y") {
+fmt.Println("  → Install from: https://github.com/cisco-ai-defense/defenseclaw")
+} else {
+fmt.Println("  Skipped")
+}
+} else {
+fmt.Println("  ✓ DefenseClaw installed")
+}
+if _, err := exec.LookPath("docker"); err == nil {
+fmt.Println("  ✓ Docker available (OpenShell sandbox compatible)")
+} else {
+fmt.Print("  Docker/OpenShell (sandbox isolation)? [y/N] ")
+input := readLine(reader)
+if strings.HasPrefix(strings.ToLower(strings.TrimSpace(input)), "y") {
+if runtime.GOOS == "darwin" {
+fmt.Println("  → brew install colima docker && colima start")
+} else {
+fmt.Println("  → Install Docker: https://docs.docker.com/engine/install/")
+}
+} else {
+fmt.Println("  Skipped")
+}
 }
 fmt.Println()
 
