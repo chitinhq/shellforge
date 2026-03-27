@@ -1,23 +1,23 @@
 // Package agent implements the ShellForge agentic execution loop.
 //
-// This is the native engine — a minimal fallback for when OpenCode or
-// DeepAgents aren't installed. It uses structured prompting to give
-// Ollama tool-use capabilities, with every tool call routed through
-// the AgentGuard governance engine.
+// Uses format-agnostic intent parsing: extracts action intent from ANY
+// model output format (structured tool_calls, JSON blocks, XML tags,
+// bare JSON, OpenAI function_call format). Every extracted action goes
+// through AgentGuard governance — no exceptions.
 //
-// When frameworks plug in, they replace this loop but use the same
-// governance layer (internal/tools + internal/governance).
+// This is the core of ShellForge's moat: you cannot trust the transport
+// layer for action integrity. The intent parser makes ShellForge
+// model-agnostic and format-agnostic.
 package agent
 
 import (
-"encoding/json"
 "fmt"
-"regexp"
 "time"
 
 "github.com/AgentGuardHQ/shellforge/internal/action"
 "github.com/AgentGuardHQ/shellforge/internal/correction"
 "github.com/AgentGuardHQ/shellforge/internal/governance"
+"github.com/AgentGuardHQ/shellforge/internal/intent"
 "github.com/AgentGuardHQ/shellforge/internal/logger"
 "github.com/AgentGuardHQ/shellforge/internal/normalizer"
 "github.com/AgentGuardHQ/shellforge/internal/ollama"
@@ -46,12 +46,6 @@ ResponseTok int
 DurationMs  int64
 Log         []string
 }
-
-var (
-jsonBlockRe = regexp.MustCompile("(?s)```json\\s*\\n?\\s*(\\{.*?\"tool\".*?\\})\\s*\\n?\\s*```")
-toolTagRe   = regexp.MustCompile("(?s)<tool>(.*?)</tool>")
-bareJSONRe  = regexp.MustCompile(`\{[^{}]*"tool"\s*:\s*"[^"]+"\s*,\s*"params"\s*:\s*\{[^}]*\}[^{}]*\}`)
-)
 
 func RunLoop(cfg LoopConfig, engine *governance.Engine) (*RunResult, error) {
 start := time.Now()
@@ -101,20 +95,25 @@ logger.ModelCall(cfg.Agent, resp.PromptEval, resp.EvalCount, resp.TotalDuration/
 content := resp.Message.Content
 messages = append(messages, ollama.ChatMessage{Role: "assistant", Content: content})
 
-toolCall := parseToolCall(content)
-if toolCall == nil {
-// No tool call — final answer
+// ── Intent parser: extract action from ANY format ──
+// This is the format-agnostic layer. Works regardless of whether the model
+// emits structured tool_calls, JSON blocks, XML tags, or bare JSON.
+parsed := intent.Parse(content)
+if parsed == nil {
+// No actionable intent — this is a final answer.
 result.Output = content
 result.Turns = turn
 logger.Agent(cfg.Agent, fmt.Sprintf("done — %d turns, %d tool calls", turn, result.ToolCalls))
 break
 }
 
+logger.Agent(cfg.Agent, fmt.Sprintf("intent: %s via %s", parsed.Tool, parsed.Source))
+
 result.ToolCalls++
 seq++
 
-// ── Normalizer: convert raw tool call to Canonical Action Representation ──
-proposal := normalizer.Normalize(runID, seq, cfg.Agent, toolCall.Tool, toolCall.Params)
+// ── Normalizer: convert extracted intent to Canonical Action Representation ──
+proposal := normalizer.Normalize(runID, seq, cfg.Agent, parsed.Tool, parsed.Params)
 fp := normalizer.Fingerprint(proposal)
 
 // ── Correction engine: check if this action should be retried or skipped ──
@@ -124,15 +123,15 @@ if !canAttempt {
 logger.Agent(cfg.Agent, fmt.Sprintf("action skipped: %s", skipReason))
 messages = append(messages, ollama.ChatMessage{
 Role:    "user",
-Content: fmt.Sprintf("Tool %q was skipped: %s. Try a different approach.", toolCall.Tool, skipReason),
+Content: fmt.Sprintf("Tool %q was skipped: %s. Try a different approach.", parsed.Tool, skipReason),
 })
-summary := fmt.Sprintf("[turn %d] %s → skipped (%s)", turn, toolCall.Tool, skipReason)
+summary := fmt.Sprintf("[turn %d] %s → skipped (%s)", turn, parsed.Tool, skipReason)
 log = append(log, summary)
 continue
 }
 
 // ── Governance evaluation (existing) ──
-decision := engine.Evaluate(toolCall.Tool, toolCall.Params)
+decision := engine.Evaluate(parsed.Tool, parsed.Params)
 
 if !decision.Allowed {
 result.Denials++
@@ -147,45 +146,45 @@ Rule:     decision.PolicyName,
 
 // Record denial and attempt correction.
 corrector.RecordDenial(fp, govDecision)
-logger.Governance(cfg.Agent, toolCall.Tool, toolCall.Params, decision.Allowed, decision.PolicyName, decision.Reason)
+logger.Governance(cfg.Agent, parsed.Tool, parsed.Params, decision.Allowed, decision.PolicyName, decision.Reason)
 
 canCorrect, _ := corrector.ShouldCorrect(fp)
 if canCorrect {
 // Build corrective feedback and feed it back to the LLM.
 feedback := corrector.BuildFeedback(proposal, govDecision)
-logger.Agent(cfg.Agent, fmt.Sprintf("governance denied %q — sending correction feedback (escalation: %s)", toolCall.Tool, corrector.Level()))
+logger.Agent(cfg.Agent, fmt.Sprintf("governance denied %q — sending correction feedback (escalation: %s)", parsed.Tool, corrector.Level()))
 messages = append(messages, ollama.ChatMessage{
 Role:    "user",
 Content: feedback,
 })
 } else {
 // Exhausted retries — skip and inform the LLM.
-logger.Agent(cfg.Agent, fmt.Sprintf("governance denied %q — no retries left, skipping", toolCall.Tool))
+logger.Agent(cfg.Agent, fmt.Sprintf("governance denied %q — no retries left, skipping", parsed.Tool))
 messages = append(messages, ollama.ChatMessage{
 Role:    "user",
-Content: fmt.Sprintf("Tool %q was denied and cannot be retried. Move on to a different approach.", toolCall.Tool),
+Content: fmt.Sprintf("Tool %q was denied and cannot be retried. Move on to a different approach.", parsed.Tool),
 })
 }
 
-summary := fmt.Sprintf("[turn %d] %s → denied (%s)", turn, toolCall.Tool, decision.PolicyName)
+summary := fmt.Sprintf("[turn %d] %s → denied (%s)", turn, parsed.Tool, decision.PolicyName)
 log = append(log, summary)
 continue
 }
 
 // ── Governance allowed: log and execute tool ──
-logger.Governance(cfg.Agent, toolCall.Tool, toolCall.Params, decision.Allowed, decision.PolicyName, decision.Reason)
-toolResult := tools.ExecuteDirect(toolCall.Tool, toolCall.Params, engine.GetTimeout())
-logger.ToolResult(cfg.Agent, toolCall.Tool, toolResult.Success, toolResult.Output)
+logger.Governance(cfg.Agent, parsed.Tool, parsed.Params, decision.Allowed, decision.PolicyName, decision.Reason)
+toolResult := tools.ExecuteDirect(parsed.Tool, parsed.Params, engine.GetTimeout())
+logger.ToolResult(cfg.Agent, parsed.Tool, toolResult.Success, toolResult.Output)
 
 var msg string
 if toolResult.Success {
-msg = fmt.Sprintf("Tool %q returned:\n%s", toolCall.Tool, toolResult.Output)
+msg = fmt.Sprintf("Tool %q returned:\n%s", parsed.Tool, toolResult.Output)
 } else {
-msg = fmt.Sprintf("Tool %q failed: %s", toolCall.Tool, toolResult.Output)
+msg = fmt.Sprintf("Tool %q failed: %s", parsed.Tool, toolResult.Output)
 }
 messages = append(messages, ollama.ChatMessage{Role: "user", Content: msg})
 
-summary := fmt.Sprintf("[turn %d] %s → %s", turn, toolCall.Tool, boolStr(toolResult.Success, "ok", "fail"))
+summary := fmt.Sprintf("[turn %d] %s → %s", turn, parsed.Tool, boolStr(toolResult.Success, "ok", "fail"))
 log = append(log, summary)
 
 // Last turn: force final answer
@@ -209,43 +208,9 @@ result.Log = log
 return result, nil
 }
 
-type toolCallParsed struct {
-Tool   string            `json:"tool"`
-Params map[string]string `json:"params"`
-}
-
-func parseToolCall(content string) *toolCallParsed {
-// Try ```json block
-if m := jsonBlockRe.FindStringSubmatch(content); len(m) > 1 {
-if tc := tryParse(m[1]); tc != nil {
-return tc
-}
-}
-// Try <tool> tags
-if m := toolTagRe.FindStringSubmatch(content); len(m) > 1 {
-if tc := tryParse(m[1]); tc != nil {
-return tc
-}
-}
-// Try bare JSON
-if m := bareJSONRe.FindString(content); m != "" {
-if tc := tryParse(m); tc != nil {
-return tc
-}
-}
-return nil
-}
-
-func tryParse(s string) *toolCallParsed {
-var tc toolCallParsed
-if err := json.Unmarshal([]byte(s), &tc); err != nil {
-return nil
-}
-if tc.Tool != "" && tc.Params != nil {
-return &tc
-}
-return nil
-}
+// Old parseToolCall/tryParse removed — replaced by intent.Parse()
+// which handles all formats: JSON blocks, XML tags, bare JSON,
+// OpenAI function_call, and tool name/param aliasing.
 
 func buildSystemPrompt(base string) string {
 toolDocs := tools.FormatForPrompt()
