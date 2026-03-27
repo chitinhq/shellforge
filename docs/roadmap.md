@@ -1,95 +1,113 @@
-# Roadmap
+# ShellForge Roadmap
 
-## Phase 1 — Foundation ✅
-- [x] Ollama integration with low-context wrapper
-- [x] 3 simple agents (QA, report, prototype)
-- [x] AgentGuard governance policy (monitor mode)
-- [x] Script-based execution with cron support
-- [x] Memory optimization placeholder
+## Completed
 
-## Phase 2 — Hardening ✅
-- [x] Go rewrite — single static binary (~7.5MB), zero Node.js dependencies
-- [x] Switch agentguard.yaml to `enforce` mode
-- [x] AgentGuard CLI hooks integrated into governance engine
-- [x] Token budget tracking per agent per day
-- [x] Output quality scoring (simple heuristics)
-- [x] Error recovery and retry logic
+### v0.1.0 — Foundation
+- [x] Go binary with Ollama integration
+- [x] 3 agents (QA, report, prototype)
+- [x] agentguard.yaml governance (enforce/monitor)
+- [x] Cron-based scheduling
 
-## Phase 3 — Framework Integration ✅
-- [x] **OpenCode** — Go CLI AI coding framework
-  - Pluggable engine interface (`internal/engine/`)
-  - `--non-interactive` subprocess mode, governance-wrapped
-  - Tool-use governance via AgentGuard policy engine
-- [x] **DeepAgents** — multi-agent orchestration (LangChain-based)
-  - Subprocess engine adapter (`internal/engine/`)
-  - Agent decomposition: break goals into sub-tasks
-  - Governance-wrapped tool calls
+### v0.2.0 — Release Pipeline
+- [x] Goreleaser + Homebrew tap (`brew install shellforge`)
+- [x] GitHub Pages site
+- [x] `shellforge serve` — daemon mode with memory-aware scheduling
+- [x] Terminal Bench 2.0 Harbor adapter
 
-## Phase 4 — Memory & Context ✅
-- [x] **RTK v0.31.0** — token compression integrated
-  - Auto-wraps shell output and LLM I/O
-  - Reduces context window usage by ~40%
-- [x] **TurboQuant** — model quantization + KV cache optimization
-  - PyTorch MPS backend on Apple Silicon
-  - Integrated via `internal/integration/`
-- [x] Prompt caching for repeated patterns
+### v0.3.x — Multi-Driver
+- [x] `shellforge run <driver>` — launch governed agents
+- [x] Driver support: Claude Code, Copilot CLI, Codex, Gemini
+- [x] Format-agnostic intent parser (extracts tool calls from any model output)
+- [x] Normalizer (raw tool call → Canonical Action Representation)
+- [x] Correction engine (denial → feedback → retry)
+- [x] Setup wizard (6-step interactive installer)
 
-## Phase 5 — Security ✅
-- [x] **NVIDIA OpenShell** sandbox integration
-  - Landlock + Seccomp isolation per agent run
-  - Docker/Colima on Mac for Linux kernel features
-  - Integrated via `internal/integration/`
-- [x] **Cisco DefenseClaw** scanning
-  - AI Bill of Materials (BoM) scanner
-  - Scan agent skills/plugins pre-install
-  - Integrated via `internal/integration/`
+### v0.4.x — Environment Awareness
+- [x] Server mode (Linux, no GPU) — skips Ollama, shows API drivers
+- [x] Mac mode — local models via Ollama
+- [x] `shellforge evaluate` — JSON governance evaluation endpoint
+- [x] `shellforge swarm` — starts Dagu orchestration dashboard
 
-## Phase 6 — Scale ✅
-- [x] Interactive setup CLI (`shellforge setup`)
-- [x] Ecosystem health check (`shellforge status`)
-- [x] Binary releases via goreleaser + Homebrew tap (#22)
-- [x] `shellforge serve` — daemon mode with memory-aware scheduling (#32)
-- [x] Paperclip as 9th integration (#31)
-- [x] Terminal Bench 2.0 adapter for Harbor framework (#34)
-- [x] Site updates — brew install CTA + swarm mode docs (#30, #33)
-- [ ] Multi-model routing (qwen for fast, mistral for quality)
-- [ ] Cross-platform support (Linux arm64, Windows)
-- [ ] Cloud telemetry integration (AgentGuard Cloud)
-- [ ] Dashboard for local swarm observability
+### v0.5.x — Driver Iteration
+- [x] Tested Crush (broken — OpenAI-compat shim loses tool calls)
+- [x] Tested Aider (file editing only, no shell execution)
+- [x] Evaluated Goose (Block) — native Ollama, actually executes tools
 
-## Phase 7 — Governed Multi-Agent Architecture 🔄 In Progress
+### v0.6.0 — Goose + Governed Shell ← CURRENT
+- [x] Goose as local model driver (`shellforge run goose`)
+- [x] `govern-shell.sh` — shell wrapper that evaluates every command through AgentGuard
+- [x] `shellforge run goose` sets SHELL to governed wrapper automatically
+- [x] Fixed catch-all deny bug (bounded-execution policy was denying everything)
+- [x] Dagu DAG templates (sdlc-swarm, studio-swarm, workspace-swarm, multi-driver)
 
-Production-grade local-first multi-agent orchestration with governance at every boundary.
+---
 
-### Phase 7.1 — Foundation 🔄 In Progress
-- [x] `ActionProposal` and `ActionResult` core types (`internal/action/types.go`)
-- [x] `InferenceQueue` with semaphore-based concurrency (`internal/scheduler/queue.go`)
-- [x] Orchestrator state machine with valid transitions (`internal/orchestrator/state.go`)
-- [ ] Single-agent orchestrator with governance boundary
-- [ ] Wire orchestrator into `shellforge run`
+## In Progress
 
-### Phase 7.2 — Turn-Based Swarm
-- [ ] Planner agent — decomposes task into `ActionProposal` sequence
-- [ ] Worker agent — executes proposals through governance gate
-- [ ] Evaluator agent — scores results and decides next step
-- [ ] Explicit state machine: PLANNING → WORKING → EVALUATING → COMPLETE
-- [ ] Run-level context sharing between agents
+### Phase 7 — Governed Multi-Agent Architecture
+Foundation types exist (`internal/action/`, `internal/orchestrator/`, `internal/scheduler/queue.go`) but not wired into execution.
 
-### Phase 7.3 — Correction + Resilience
-- [ ] Corrector role — rewrites denied proposals within policy
-- [ ] Denial tracking with per-run and per-agent counters
-- [ ] Anti-loop hash detection (repeated proposal fingerprints)
-- [ ] Escalation thresholds — auto-fail after N consecutive denials
-- [ ] Circuit breaker — pause swarm on systemic governance failures
+#### 7.1 — Wire Orchestrator
+- [ ] Connect orchestrator state machine to `shellforge run`
+- [ ] Proposal → Governance → Result flow through kernel
+- [ ] Run-level audit trail (structured events, not just logs)
 
-### Phase 7.4 — Observability + Production
-- [ ] Full event emission (proposal, decision, result, transition)
-- [ ] Run summaries with governance statistics
-- [ ] Terminal Bench 2.0 integration for multi-agent evaluation
-- [ ] 24h soak test — sustained swarm stability under load
+#### 7.2 — Turn-Based Swarm
+- [ ] Planner agent — task decomposition via Ollama
+- [ ] Worker agent — Goose executes subtasks with governance
+- [ ] Evaluator agent — validates results
+- [ ] State machine: PLANNING → WORKING → EVALUATING → COMPLETE
 
-## Phase 8 — Terminal Bench 2.0 Submission
-- [x] Harbor adapter (#34)
-- [ ] Dry run on single task
+#### 7.3 — Resilience
+- [ ] Anti-loop hash detection
+- [ ] Escalation thresholds (auto-fail after N denials)
+- [ ] Circuit breaker on Ollama failures
+
+#### 7.4 — Observability
+- [ ] Structured event emission to SQLite
+- [ ] Run summaries with governance stats
+- [ ] 24h soak test
+
+---
+
+## Planned
+
+### Phase 8 — AgentGuard MCP Server
+- [ ] MCP server exposing governed tools
+- [ ] Goose → MCP → AgentGuard → execute
+- [ ] Dual-layer: kernel enforces, MCP integrates
+
+### Phase 9 — Terminal Bench 2.0
+- [x] Harbor adapter
+- [ ] Dry run on single task with Goose
 - [ ] Full 89-task evaluation
 - [ ] Leaderboard submission
+
+### Phase 10 — Production Hardening
+- [ ] AgentGuard Go kernel integration (in-process, not subprocess)
+- [ ] Publish Go module (`github.com/AgentGuardHQ/agentguard/go/pkg/hook`)
+- [ ] Move `internal/` types to `pkg/` for external import
+- [ ] Cloud telemetry opt-in (AgentGuard Cloud)
+
+### Phase 11 — Replace Workspace Bash Swarm
+- [ ] Dagu replaces `server/deploy.sh` + cron + queue.txt
+- [ ] Multi-driver DAGs: Claude Code + Copilot + Codex on Linux box
+- [ ] Same governance policy across all drivers
+- [ ] ShellForge as the runtime for agentguard-workspace swarm
+
+---
+
+## Stack (as of v0.6.1)
+
+| Component | Role | Status |
+|---|---|---|
+| Goose (Block) | Local model driver | Working |
+| Claude Code | API driver (Linux) | Working (via hooks) |
+| Copilot CLI | API driver (Linux) | Working (via hooks) |
+| Codex CLI | API driver (Linux) | Coming soon |
+| Gemini CLI | API driver (Linux) | Coming soon |
+| Ollama | Local inference | Working |
+| AgentGuard | Governance kernel | Working (YAML eval + Go kernel) |
+| Dagu | Orchestration | Working (DAGs + web UI) |
+| RTK | Token compression | Optional |
+| Docker | Sandbox | Optional |
