@@ -19,7 +19,7 @@ import (
 "github.com/AgentGuardHQ/shellforge/internal/scheduler"
 )
 
-var version = "0.4.5"
+var version = "0.4.6"
 
 func main() {
 if len(os.Args) < 2 {
@@ -287,22 +287,22 @@ if err := buildCmd.Run(); err != nil {
 fmt.Printf("  ⚠ Build failed: %s\n", err)
 fmt.Println("    Requires Go 1.22+. Check: go version")
 } else {
-// Move binary to a location in PATH
+// Move binary to /usr/local/bin (always in PATH)
 crushBin := filepath.Join(crushDir, "crush")
-gobin := os.Getenv("GOBIN")
-if gobin == "" {
-gobin = filepath.Join(os.Getenv("HOME"), "go", "bin")
+dest := "/usr/local/bin/crush"
+cpCmd := exec.Command("cp", crushBin, dest)
+if err := cpCmd.Run(); err != nil {
+// Try with sudo
+fmt.Println("  → Need permissions to install to /usr/local/bin...")
+run("sudo", "cp", crushBin, dest)
+run("sudo", "chmod", "+x", dest)
 }
-os.MkdirAll(gobin, 0o755)
-dest := filepath.Join(gobin, "crush")
-if data, err := os.ReadFile(crushBin); err == nil {
-if err := os.WriteFile(dest, data, 0o755); err == nil {
-fmt.Printf("  ✓ Crush installed to %s\n", dest)
+if _, err := exec.LookPath("crush"); err == nil {
+fmt.Println("  ✓ Crush installed to /usr/local/bin/crush")
 fmt.Println("  ✓ AgentGuard governance built in")
 } else {
-fmt.Printf("  ⚠ Could not install to %s: %s\n", dest, err)
-fmt.Printf("    Try: sudo cp %s /usr/local/bin/crush\n", crushBin)
-}
+fmt.Println("  ⚠ Install failed. Try manually:")
+fmt.Printf("    sudo cp %s /usr/local/bin/crush\n", crushBin)
 }
 }
 os.RemoveAll(crushDir)
