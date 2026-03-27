@@ -1,0 +1,23 @@
+{
+  "name": "shellforge",
+  "version": "0.1.0",
+  "description": "ShellForge — local governed agent swarm powered by Ollama + AgentGuard",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "agent": "tsx agents/prototype-agent.ts",
+    "qa": "tsx agents/qa-agent.ts",
+    "report": "tsx agents/report-agent.ts"
+  },
+  "dependencies": {
+    "tsx": "^4.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

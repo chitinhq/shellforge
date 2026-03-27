@@ -1,0 +1,8 @@
+node_modules/
+dist/
+outputs/reports/*.md
+outputs/logs/*.log
+!outputs/reports/.gitkeep
+!outputs/logs/.gitkeep
+.env
+.tmp/

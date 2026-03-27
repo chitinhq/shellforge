@@ -1,0 +1,49 @@
+# ShellForge — AgentGuard Governance Policy
+# Mode: monitor (log but don't block) — switch to enforce when ready
+
+mode: monitor
+
+policies:
+  - name: no-force-push
+    description: Prevent force pushes to any remote
+    match:
+      command: "git push"
+      args_contain: ["--force", "-f", "--force-with-lease"]
+    action: deny
+    message: "Force push is not allowed by governance policy"
+
+  - name: no-destructive-rm
+    description: Block recursive force deletion
+    match:
+      command: "rm"
+      args_contain: ["-rf", "-fr"]
+    action: deny
+    message: "Destructive rm -rf blocked by policy"
+
+  - name: file-write-constraints
+    description: Agents may only write to outputs/ and agents' own workspace
+    match:
+      command: "write_file"
+      path_not_under:
+        - outputs/
+        - .tmp/
+    action: deny
+    message: "File writes restricted to outputs/ directory"
+
+  - name: test-before-merge
+    description: Stub — require tests to pass before merge (not enforced yet)
+    match:
+      command: "git merge"
+    action: monitor
+    message: "Test-before-merge policy (monitoring only)"
+
+  - name: bounded-execution
+    description: Agents must exit within timeout
+    timeout_seconds: 300
+    action: deny
+    message: "Agent exceeded 5-minute execution limit"
+
+telemetry:
+  enabled: true
+  local_sqlite: true
+  cloud: false
