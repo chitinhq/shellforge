@@ -4,7 +4,9 @@ package main
 
 import (
 "bufio"
+"encoding/json"
 "fmt"
+"io"
 "os"
 "os/exec"
 "path/filepath"
@@ -19,7 +21,7 @@ import (
 "github.com/AgentGuardHQ/shellforge/internal/scheduler"
 )
 
-var version = "0.4.7"
+var version = "0.4.8"
 
 func main() {
 if len(os.Args) < 2 {
@@ -54,6 +56,8 @@ if len(os.Args) > 3 {
 prompt = strings.Join(os.Args[3:], " ")
 }
 cmdRun(driver, prompt)
+case "evaluate":
+cmdEvaluate()
 case "agent":
 if len(os.Args) < 3 {
 fmt.Fprintln(os.Stderr, "Usage: shellforge agent \"your prompt\"")
@@ -777,6 +781,47 @@ sched := scheduler.New(cfg, run)
 sched.Start()
 fmt.Println("[serve] running — press Ctrl+C to stop")
 sched.Wait()
+}
+
+func cmdEvaluate() {
+// Read JSON from stdin, evaluate against governance, output JSON result.
+// Used by Crush fork to check actions before execution.
+data, err := io.ReadAll(os.Stdin)
+if err != nil {
+json.NewEncoder(os.Stdout).Encode(map[string]any{"allowed": true, "reason": "stdin read error"})
+return
+}
+
+var input struct {
+Tool   string `json:"tool"`
+Action string `json:"action"`
+Path   string `json:"path"`
+}
+json.Unmarshal(data, &input)
+
+configPath := findGovernanceConfig()
+if configPath == "" {
+json.NewEncoder(os.Stdout).Encode(map[string]any{"allowed": true, "reason": "no policy"})
+return
+}
+
+engine, err := governance.NewEngine(configPath)
+if err != nil {
+json.NewEncoder(os.Stdout).Encode(map[string]any{"allowed": true, "reason": "policy error"})
+return
+}
+
+// Map Crush tool names to ShellForge tool names
+tool := input.Tool
+params := map[string]string{"command": input.Action, "path": input.Path}
+
+decision := engine.Evaluate(tool, params)
+json.NewEncoder(os.Stdout).Encode(map[string]any{
+"allowed":    decision.Allowed,
+"reason":     decision.Reason,
+"policy":     decision.PolicyName,
+"suggestion": "",
+})
 }
 
 func cmdScan() {
