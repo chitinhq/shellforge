@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 
+/** Configuration for a single agent, resolved from env vars and defaults. */
 export interface AgentConfig {
   name: string;
   description: string;
@@ -42,6 +43,13 @@ export const agents: Record<string, AgentConfig> = {
   },
 };
 
+/**
+ * Retrieve the resolved configuration for a named agent.
+ *
+ * @param name - Agent key (e.g. `'qa'`, `'report'`, `'prototype'`).
+ * @returns The agent's `AgentConfig`.
+ * @throws If no agent with the given name is registered.
+ */
 export function getAgent(name: string): AgentConfig {
   const config = agents[name];
   if (!config) {
@@ -51,6 +59,10 @@ export function getAgent(name: string): AgentConfig {
   return config;
 }
 
+/**
+ * Load environment variables from `.env` into `process.env`.
+ * Existing env vars are never overwritten. Silently no-ops if `.env` is absent.
+ */
 export function loadEnv(): void {
   const envPath = resolve(ROOT, '.env');
   if (!existsSync(envPath)) return;
