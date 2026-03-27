@@ -633,20 +633,25 @@ fmt.Printf("  %d DAG(s) found\n", len(entries))
 configPath := findGovernanceConfig()
 if configPath == "" {
 fmt.Println("⚠ No agentguard.yaml — run 'shellforge setup' first")
-} else {
-fmt.Println("✓ Governance config found")
+return
 }
+fmt.Println("✓ Governance config found")
 
+// Get absolute path to dags directory
+dagsDir, _ := filepath.Abs("dags")
+
+// Start Dagu server
 fmt.Println()
-fmt.Println("Start the swarm:")
+fmt.Printf("→ Starting Dagu server (dags: %s)\n", dagsDir)
+fmt.Println("  Dashboard: http://localhost:8080")
+fmt.Println("  Press Ctrl+C to stop")
 fmt.Println()
-fmt.Println("  dagu server --dags=./dags")
-fmt.Println()
-fmt.Println("Then open http://localhost:8080 for the dashboard.")
-fmt.Println()
-fmt.Println("Run a DAG now:")
-fmt.Println()
-fmt.Println("  dagu start dags/sdlc-swarm.yaml")
+
+cmd := exec.Command("dagu", "server", "--dags="+dagsDir)
+cmd.Stdout = os.Stdout
+cmd.Stderr = os.Stderr
+cmd.Stdin = os.Stdin
+cmd.Run()
 }
 
 func cmdServe(configPath string) {
