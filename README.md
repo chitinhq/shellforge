@@ -2,7 +2,7 @@
 
 # 🔥 ShellForge
 
-**Governed local AI agents — a single Go binary, eight integrations, zero cloud.**
+**Governed local AI agents — a single Go binary, nine integrations, zero cloud.**
 
 [![Go](https://img.shields.io/badge/Go-1.18+-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev)
 [![GitHub Pages](https://img.shields.io/badge/🌐_Live_Site-agentguardhq.github.io/shellforge-ff6b2b?style=for-the-badge)](https://agentguardhq.github.io/shellforge)
@@ -28,7 +28,7 @@ brew tap AgentGuardHQ/tap
 brew install shellforge
 
 shellforge setup                 # pulls Ollama + model + verifies stack
-shellforge status                # verify 8/8 integrations ✓
+shellforge status                # verify 9/9 integrations ✓
 shellforge qa                    # run the QA agent
 ```
 
@@ -38,7 +38,7 @@ shellforge qa                    # run the QA agent
 git clone https://github.com/AgentGuardHQ/shellforge.git
 cd shellforge
 
-bash scripts/setup.sh --all     # install full 8-layer ecosystem
+bash scripts/setup.sh --all     # install full 9-layer ecosystem
 go build -o shellforge ./cmd/shellforge/
 ./shellforge status
 ```
@@ -51,13 +51,13 @@ go build -o shellforge ./cmd/shellforge/
 
 ShellForge is a **governed AI agent runtime** — a single Go binary that orchestrates local LLM inference through [Ollama](https://ollama.com) and wraps every tool call with [AgentGuard](https://github.com/AgentGuardHQ/agentguard) policy enforcement.
 
-**The core insight:** ShellForge's value is **governance**, not the agent loop. When [OpenCode](https://github.com/opencode-ai/opencode) or [DeepAgents](https://github.com/langchain-ai/deepagents) are installed, they provide the agentic loop and tools — ShellForge wraps them with AgentGuard policy enforcement. The native agent loop (`internal/agent/loop.go`) is a fallback for when no external framework is available.
+**The core insight:** ShellForge's value is **governance**, not the agent loop. Three execution engines handle the work — [OpenCode](https://github.com/opencode-ai/opencode) for AI coding, [DeepAgents](https://github.com/langchain-ai/deepagents) for multi-step planning, and [Paperclip](https://github.com/paperclipai/paperclip) for multi-agent orchestration. ShellForge wraps them all with [AgentGuard](https://github.com/AgentGuardHQ/agentguard) policy enforcement on every tool call.
 
 ---
 
 ## The 8-Layer Ecosystem
 
-Eight open-source integrations. One governed runtime.
+Nine open-source integrations. One governed runtime.
 
 | # | Layer | Project | What It Does |
 |---|-------|---------|--------------|
@@ -66,7 +66,8 @@ Eight open-source integrations. One governed runtime.
 | 3 | 🧠 **Quantize** | [TurboQuant](https://github.com/google-research/turboquant) (Google) | KV cache optimization — run 14B models on 8 GB Macs |
 | 4 | 🛡️ **Govern** | [AgentGuard](https://github.com/AgentGuardHQ/agentguard) | Governance kernel — enforce/monitor policy on every action |
 | 5 | 💻 **Code** | [OpenCode](https://github.com/opencode-ai/opencode) | AI coding framework (Go CLI, native tools) |
-| 6 | 🤖 **Orchestrate** | [DeepAgents](https://github.com/langchain-ai/deepagents) (LangChain) | Multi-agent orchestration (autonomous task decomposition) |
+| 6 | 🤖 **Plan** | [DeepAgents](https://github.com/langchain-ai/deepagents) (LangChain) | Multi-step planning and task decomposition |
+| 6b | 📎 **Orchestrate** | [Paperclip](https://github.com/paperclipai/paperclip) | Multi-agent org charts, budgets, task coordination |
 | 7 | 🔒 **Sandbox** | [OpenShell](https://github.com/NVIDIA/OpenShell) (NVIDIA) | Kernel sandbox — Landlock + Seccomp BPF (Docker on macOS) |
 | 8 | 🐾 **Scan** | [DefenseClaw](https://github.com/cisco-ai-defense/defenseclaw) (Cisco) | Supply chain scanner — AI Bill of Materials generation |
 
@@ -80,9 +81,10 @@ Check integration health at any time:
 # ✓ AgentGuard    enforce mode (5 rules)
 # ✓ OpenCode      v0.1.0
 # ✓ DeepAgents    connected
+# ✓ Paperclip     orchestrator ready
 # ✓ OpenShell     Docker sandbox active
 # ✓ DefenseClaw   scanner ready
-# Status: 8/8 integrations healthy
+# Status: 9/9 integrations healthy
 ```
 
 ---
@@ -91,7 +93,7 @@ Check integration health at any time:
 
 | Command | Description |
 |---------|-------------|
-| `./shellforge status` | Show ecosystem health (all 8 integrations) |
+| `./shellforge status` | Show ecosystem health (all 9 integrations) |
 | `./shellforge qa` | Run the QA agent (test gap analysis) |
 | `./shellforge report` | Run the report agent (markdown summary) |
 | `./shellforge agent` | Run a custom agent with a prompt |
@@ -128,11 +130,11 @@ Check integration health at any time:
               │  🔥 ShellForge (Go binary)   │
               │                              │
               │  ┌─ OpenCode adapter ──────┐ │
-              │  │  (preferred agent loop)  │ │  Pluggable engine
+              │  │  AI coding engine        │ │  Pluggable engine
               │  ├─ DeepAgents adapter ────┤ │  interface picks the
-              │  │  (multi-agent planning)  │ │  best available
-              │  ├─ Native loop (fallback) ┤ │  framework at runtime
-              │  │  internal/agent/loop.go  │ │
+              │  │  multi-step planning     │ │  best available
+              │  ├─ Paperclip adapter ─────┤ │  framework at runtime
+              │  │  multi-agent orchestration│ │
               │  └─────────────────────────┘ │
               │                              │
               │  Tools: read_file │ write_file│
@@ -201,11 +203,11 @@ policies:
 shellforge/
 ├── cmd/shellforge/
 │   ├── main.go                    # CLI entry (setup, qa, report, agent, scan, status, version)
-│   └── status.go                  # Ecosystem health check (all 8 integrations)
+│   └── status.go                  # Ecosystem health check (all 9 integrations)
 ├── internal/
 │   ├── governance/engine.go       # Parses agentguard.yaml, enforce/monitor mode
 │   ├── ollama/client.go           # Ollama HTTP client
-│   ├── agent/loop.go              # Multi-turn agentic loop with tool calls (native fallback)
+│   ├── agent/loop.go              # Multi-turn agentic loop with tool calls
 │   ├── tools/
 │   │   ├── tools.go               # 5 tools: read_file, write_file, run_shell, list_files, search_files
 │   │   └── rtk_shell.go           # RTK-wrapped shell execution
@@ -213,7 +215,8 @@ shellforge/
 │   ├── engine/
 │   │   ├── engine.go              # Pluggable engine interface
 │   │   ├── opencode.go            # OpenCode subprocess adapter
-│   │   └── deepagents.go          # DeepAgents subprocess adapter
+│   │   ├── deepagents.go          # DeepAgents subprocess adapter
+│   │   └── paperclip.go           # Paperclip orchestration adapter
 │   └── integration/
 │       ├── rtk.go                 # RTK token compression
 │       ├── openshell.go           # NVIDIA OpenShell sandbox
@@ -292,7 +295,7 @@ ShellForge is part of the **AgentGuard** ecosystem:
 |---------|--------------|
 | [**AgentGuard**](https://github.com/AgentGuardHQ/agentguard) | Governance gateway — policy enforcement for Claude Code, Codex, Copilot, Gemini, OpenCode, DeepAgents |
 | [**AgentGuard Cloud**](https://github.com/AgentGuardHQ/agentguard-cloud) | SaaS dashboard — observability, session replay, swarm org chart |
-| **ShellForge** ← you are here | Governed local agent runtime — Go binary + Ollama + 8 integrations |
+| **ShellForge** ← you are here | Governed local agent runtime — Go binary + Ollama + 9 integrations |
 
 ---
 
