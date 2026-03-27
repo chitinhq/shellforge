@@ -76,21 +76,31 @@
 
     /* ─── Hero ─── */
     .hero {
-      padding: 120px 0 80px;
+      padding: 60px 0 80px;
       text-align: center;
       position: relative;
+      overflow: hidden;
     }
     .hero::after {
       content: '';
       position: absolute;
-      top: 60px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse at center top, rgba(255,107,43,0.08) 0%, transparent 60%);
       z-index: -1;
     }
+    .hero-image {
+      margin: 0 auto 36px;
+      max-width: 720px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 60px rgba(255,107,43,0.2), 0 0 120px rgba(255,107,43,0.06);
+      border: 1px solid rgba(255,107,43,0.15);
+    }
+    .hero-image img {
+      width: 100%;
+      display: block;
+    }
+    .red { color: var(--red); font-weight: 700; }
     .hero-badge {
       display: inline-block;
       padding: 6px 16px;
@@ -365,7 +375,9 @@
     @media (max-width: 768px) {
       .ecosystem-grid { grid-template-columns: 1fr; }
       nav ul { gap: 16px; }
-      .hero { padding: 80px 0 60px; }
+      .hero { padding: 40px 0 40px; }
+      .hero-image { max-width: 95%; border-radius: 12px; }
+      .stack-connector { font-size: 0.7rem; }
     }
   </style>
 </head>
@@ -387,7 +399,9 @@
 <!-- ─── Hero ─── -->
 <section class="hero">
   <div class="container">
-    <div class="hero-badge">Open Source · MIT License · <strong>Built for Apple Silicon</strong></div>
+    <div class="hero-image">
+      <img src="https://github.com/user-attachments/assets/a94a8a5e-dfeb-4771-a6ab-465d3c2f01f0" alt="ShellForge — Forge Local AI Agents" />
+    </div>
     <h1>
       <span class="fire">Forge</span> Local AI Agents.<br>
       Governed.
@@ -396,6 +410,7 @@
       Run autonomous AI agents on your Mac with local LLMs, full governance, and zero cloud dependency.
       Powered by Ollama. Governed by AgentGuard.
     </p>
+    <div class="hero-badge">Open Source · MIT License · <strong>Built for Apple Silicon</strong></div>
     <div class="hero-actions">
       <a href="https://github.com/AgentGuardHQ/shellforge" class="btn btn-primary">
         ⭐ Star on GitHub
@@ -419,12 +434,14 @@
         <span class="output">✓ Model ready: qwen3:1.7b</span><br>
         <span class="output">=== ShellForge Setup Complete ===</span><br>
         <br>
-        <span class="prompt">$</span> <span class="cmd">npm run report</span><br>
-        <span class="output">[report-agent] starting — repo: .</span><br>
-        <span class="output">[report-agent] generating report...</span><br>
-        <span class="accent">[report-agent] done — output: outputs/reports/report-2026-03-27.md</span><br>
+        <span class="prompt">$</span> <span class="cmd">npm run qa</span><br>
+        <span class="output">[🛡️ AgentGuard] policy: allow — qa-agent.ts → Read(src/)</span><br>
+        <span class="output">[🛡️ AgentGuard] policy: allow — qa-agent.ts → Bash(npx tsc)</span><br>
+        <span class="accent">[qa-agent] done — 3 findings, 12 test suggestions ✓</span><br>
         <br>
         <span class="prompt">$</span> <span class="cmd">npm run agent -- <span class="blue">"build a REST health endpoint"</span></span><br>
+        <span class="output">[🛡️ AgentGuard] policy: allow — prototype-agent.ts → Write(src/health.ts)</span><br>
+        <span class="output">[🛡️ AgentGuard] policy: <span class="red">DENY</span> — prototype-agent.ts → Bash(rm -rf /)</span><br>
         <span class="accent">[prototype-agent] done — 47 tokens, 0.8s ⚡</span>
       </div>
     </div>
