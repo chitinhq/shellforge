@@ -81,9 +81,9 @@ Usage:
   shellforge version               Print version
 
   shellforge serve [config]       Daemon mode — run scheduled agent swarm
+
 Governance:  agentguard.yaml — every tool call evaluated before execution.
-Engines:     OpenCode · DeepAgents · Paperclip
-Stack:       RTK · TurboQuant · Ollama · AgentGuard · OpenShell · DefenseClaw
+Stack:       Ollama · AgentGuard · RTK
 
 `, version)
 }
@@ -121,6 +121,43 @@ run("ollama", "pull", model)
 fmt.Printf("✓ Model ready: %s\n", model)
 
 configPath := findGovernanceConfig()
+if configPath == "" {
+fmt.Println("→ Creating default agentguard.yaml...")
+defaultPolicy := `# agentguard.yaml — ShellForge governance policy
+# Mode: enforce (block violations) or monitor (log only)
+mode: enforce
+
+policies:
+  - name: no-force-push
+    description: Prevent force pushes to any remote
+    match:
+      command: "git push"
+      args_contain: ["--force", "-f", "--force-with-lease"]
+    action: deny
+    message: "Force push is not allowed by governance policy"
+
+  - name: no-destructive-rm
+    description: Block recursive force deletion
+    match:
+      command: "rm"
+      args_contain: ["-rf", "-fr"]
+    action: deny
+    message: "Recursive force deletion is not allowed"
+
+  - name: no-secret-access
+    description: Prevent reading sensitive files
+    match:
+      path_pattern: "*.env|*id_rsa|*id_ed25519|*.pem"
+    action: deny
+    message: "Access to secrets/keys is not allowed"
+`
+if err := os.WriteFile("agentguard.yaml", []byte(defaultPolicy), 0o644); err != nil {
+fmt.Printf("⚠ Could not create agentguard.yaml: %s\n", err)
+} else {
+configPath = "agentguard.yaml"
+fmt.Println("✓ Governance: agentguard.yaml created (enforce mode, 3 policies)")
+}
+}
 if configPath != "" {
 eng, err := governance.NewEngine(configPath)
 if err != nil {
@@ -128,14 +165,21 @@ fmt.Printf("⚠ Governance config error: %s\n", err)
 } else {
 fmt.Printf("✓ Governance: mode=%s, %d policies\n", eng.Mode, len(eng.Policies))
 }
+}
+
+// Check for optional tools
+if _, err := exec.LookPath("rtk"); err == nil {
+fmt.Println("✓ RTK installed (token compression)")
 } else {
-fmt.Println("⚠ No agentguard.yaml found")
+fmt.Println("  RTK not found (optional — install: npm i -g @anthropic/rtk)")
 }
 
 os.MkdirAll("outputs/logs", 0o755)
 os.MkdirAll("outputs/reports", 0o755)
 fmt.Println("✓ Output directories ready")
 fmt.Println("=== ShellForge Setup Complete ===")
+fmt.Println()
+fmt.Println("Next: shellforge agent \"describe what this project does\"")
 }
 
 func cmdQA(target string) {

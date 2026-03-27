@@ -19,28 +19,52 @@
 
 ---
 
-## Quick Start
+## Quick Start (Mac)
 
-### Install via Homebrew (macOS / Linux)
+### 1. Install ShellForge
 
 ```bash
 brew tap AgentGuardHQ/tap
 brew install shellforge
-
-shellforge setup                 # pulls Ollama + model + verifies stack
-shellforge run crush "analyze this repo for test gaps"
 ```
 
-### Install from source
+Or from source: `git clone https://github.com/AgentGuardHQ/shellforge.git && cd shellforge && go build -o shellforge ./cmd/shellforge/`
+
+### 2. Install Ollama (if you haven't already)
 
 ```bash
-git clone https://github.com/AgentGuardHQ/shellforge.git
-cd shellforge
-go build -o shellforge ./cmd/shellforge/
-./shellforge setup
+brew install ollama
+ollama serve                     # start the model server (leave running)
 ```
 
-**Requirements:** macOS (Apple Silicon/Intel) or Linux · ~1.3 GB RAM (1.7B model)
+### 3. Pull a model
+
+```bash
+ollama pull qwen3:8b             # 8B — good balance (needs ~6GB RAM)
+# or: ollama pull qwen3:30b      # 30B — best quality (needs ~19GB, M4 Pro recommended)
+# or: ollama pull qwen3:1.7b     # 1.7B — fastest, minimal RAM
+```
+
+### 4. Run setup inside any repo
+
+```bash
+cd ~/your-project                # navigate to any repo you want to work in
+shellforge setup                 # creates agentguard.yaml + output dirs
+```
+
+This creates `agentguard.yaml` (governance policy) in your project root. Edit it to customize which actions are allowed/denied.
+
+### 5. Run an agent
+
+```bash
+shellforge agent "describe what this project does"
+shellforge agent "find test gaps and suggest improvements"
+shellforge agent "create a hello world program"
+```
+
+Every tool call (file reads, writes, shell commands) passes through governance before execution.
+
+**Requirements:** macOS (Apple Silicon or Intel) or Linux
 
 ---
 
@@ -89,12 +113,12 @@ shellforge status
 
 | Command | Description |
 |---------|-------------|
-| `shellforge run crush "prompt"` | Run Crush with full governance |
-| `shellforge serve agents.yaml` | Daemon mode — run scheduled agent swarm |
-| `shellforge agent "prompt"` | Run built-in agent with governance |
+| `shellforge setup` | Install Ollama, create governance config, verify stack |
+| `shellforge agent "prompt"` | Run a governed agent — every tool call checked |
+| `shellforge qa [dir]` | QA analysis — find test gaps and issues |
+| `shellforge report [repo]` | Generate a status report from git + logs |
+| `shellforge serve agents.yaml` | Daemon mode — run a 24/7 agent swarm |
 | `shellforge status` | Show ecosystem health |
-| `shellforge setup` | Install Ollama, pull model, verify stack |
-| `shellforge scan` | Run security scan via DefenseClaw |
 | `shellforge version` | Print version |
 
 ---
