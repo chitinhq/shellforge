@@ -218,18 +218,40 @@ return base + `
 
 ## Tools
 
-You have access to these tools. To use one, respond with a JSON code block:
+You MUST use tools to complete tasks. Do NOT describe what you would do — actually do it.
 
-` + "```json\n{\"tool\": \"tool_name\", \"params\": {\"param1\": \"value1\"}}\n```" + `
+To call a tool, output EXACTLY this format (JSON in a code block):
 
-Available tools:
+` + "```json\n{\"tool\": \"list_files\", \"params\": {\"directory\": \".\"}}\n```" + `
+
+## Example
+
+User: "What files are in this project?"
+
+WRONG (do not do this):
+"I would use list_files to check the directory structure."
+
+CORRECT (do this):
+` + "```json\n{\"tool\": \"list_files\", \"params\": {\"directory\": \".\"}}\n```" + `
+
+## Another Example
+
+User: "Read the README"
+
+CORRECT:
+` + "```json\n{\"tool\": \"read_file\", \"params\": {\"path\": \"README.md\"}}\n```" + `
+
+## Available tools:
 
 ` + toolDocs + `
+
 ## Rules
-- Use ONE tool per response. Wait for the result before calling another.
-- When done, respond normally WITHOUT a tool call — that is your final answer.
-- If governance denies a tool call, do NOT retry the same action — try an alternative.
-- Keep tool usage focused and minimal.`
+- ALWAYS use tools. Never just describe what you would do.
+- Output ONE tool call per response as a JSON code block.
+- Wait for the tool result before calling another tool.
+- When you have enough information to answer, respond normally WITHOUT a JSON block.
+- If governance denies a tool call, try a different approach.
+`
 }
 
 func compactMessages(msgs []ollama.ChatMessage, budget int) []ollama.ChatMessage {
