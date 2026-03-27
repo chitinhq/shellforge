@@ -44,7 +44,11 @@ Policy-as-code enforcement via `agentguard.yaml`.
 Currently in `monitor` mode — logs all actions, blocks nothing.
 Switch to `enforce` when policies are battle-tested.
 
-### Layer 2 — Agent Logic
+### Layer 2 — Model (Ollama)
+Local LLM serving via Ollama. Default model: `qwen3:1.7b` (1.7B params, ~1GB RAM).
+Swap to any Ollama-supported model by changing `OLLAMA_MODEL` in `.env`.
+
+### Layer 3 — Agent Logic
 Simple TypeScript scripts. Each agent:
 1. Reads input (files, git log, user prompt)
 2. Constructs a system + user prompt
@@ -52,10 +56,6 @@ Simple TypeScript scripts. Each agent:
 4. Saves output to `outputs/`
 
 No frameworks, no daemons, no state between runs.
-
-### Layer 3 — Model (Ollama)
-Local LLM serving via Ollama. Default model: `qwen3:1.7b` (1.7B params, ~1GB RAM).
-Swap to any Ollama-supported model by changing `OLLAMA_MODEL` in `.env`.
 
 ## Data Flow
 

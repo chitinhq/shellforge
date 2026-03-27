@@ -115,9 +115,11 @@ cp .env.example .env
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `OLLAMA_HOST` | `http://localhost:11434` | Ollama server URL |
 | `OLLAMA_MODEL` | `qwen3:1.7b` | Any Ollama-supported model |
 | `OLLAMA_CTX_SIZE` | `4096` | Context window (lower = less RAM) |
 | `AGENT_TIMEOUT` | `300` | Max seconds per agent run |
+| `AGENT_OUTPUT_DIR` | `outputs` | Directory for agent output files |
 
 ### Model Options
 

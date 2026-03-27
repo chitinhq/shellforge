@@ -4,6 +4,7 @@ const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen3:1.7b';
 const OLLAMA_CTX_SIZE = parseInt(process.env.OLLAMA_CTX_SIZE || '4096', 10);
 
+/** Options for a generation request sent to Ollama. */
 export interface OllamaRequest {
   prompt: string;
   model?: string;
@@ -11,6 +12,7 @@ export interface OllamaRequest {
   temperature?: number;
 }
 
+/** Parsed response returned from an Ollama generation request. */
 export interface OllamaResponse {
   text: string;
   model: string;
@@ -19,6 +21,14 @@ export interface OllamaResponse {
   responseTokens: number;
 }
 
+/**
+ * Send a generation request to the local Ollama instance.
+ * Automatically optimizes the prompt via the memory layer and records token usage.
+ *
+ * @param req - Prompt, optional model override, optional system prompt, and temperature.
+ * @returns Parsed response including generated text and token counts.
+ * @throws If Ollama returns a non-OK HTTP status.
+ */
 export async function generate(req: OllamaRequest): Promise<OllamaResponse> {
   const prompt = await optimizePrompt(req.prompt);
 
@@ -62,6 +72,10 @@ export async function generate(req: OllamaRequest): Promise<OllamaResponse> {
   return result;
 }
 
+/**
+ * Check whether the local Ollama server is reachable.
+ * @returns `true` if Ollama responds to a tags request, `false` otherwise.
+ */
 export async function isOllamaRunning(): Promise<boolean> {
   try {
     const res = await fetch(`${OLLAMA_HOST}/api/tags`);
@@ -71,6 +85,10 @@ export async function isOllamaRunning(): Promise<boolean> {
   }
 }
 
+/**
+ * List the names of all models currently available in Ollama.
+ * @returns Array of model name strings, or an empty array if the request fails.
+ */
 export async function listModels(): Promise<string[]> {
   const res = await fetch(`${OLLAMA_HOST}/api/tags`);
   if (!res.ok) return [];
