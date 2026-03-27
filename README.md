@@ -1,181 +1,215 @@
+<div align="center">
+
 # 🔥 ShellForge
 
-A minimal, production-quality local agent swarm powered by [Ollama](https://ollama.com) and governed by [AgentGuard](https://github.com/AgentGuardHQ/agentguard).
+**Forge local AI agents. Governed. Private. Unstoppable.**
 
-Forge autonomous AI agents on your Mac (Apple Silicon) with local LLMs, full governance, and zero cloud dependency.
+[![GitHub Pages](https://img.shields.io/badge/🌐_Live_Site-agentguardhq.github.io/shellforge-ff6b2b?style=for-the-badge)](https://agentguardhq.github.io/shellforge)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
+[![AgentGuard](https://img.shields.io/badge/Governed_by-AgentGuard-green?style=for-the-badge)](https://github.com/AgentGuardHQ/agentguard)
 
-## Why
+*Run autonomous AI agents on your machine. No cloud. No API keys. No data leaves your laptop.*
 
-Cloud AI agents are powerful but expensive, rate-limited, and opaque. This repo gives you:
+[🌐 Website](https://agentguardhq.github.io/shellforge) · [📖 Docs](docs/architecture.md) · [🗺️ Roadmap](docs/roadmap.md) · [🛡️ AgentGuard](https://github.com/AgentGuardHQ/agentguard)
 
-- **Local execution** — agents run on your machine via Ollama
-- **Governance** — every agent action is policy-checked by AgentGuard
-- **Low memory** — optimized for Apple Silicon, ~1.3 GB for a 1.7B model
-- **Extensible** — plug in DeepAgents, OpenCode, or any framework later
-- **Cron-ready** — every script is safe for repeated, unattended execution
+</div>
+
+---
+
+## The Vision
+
+The agentic AI security stack is forming:
+
+| Layer | Project | Role |
+|-------|---------|------|
+| **Layer 0** | [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell) | Kernel sandbox — Landlock + Seccomp isolation |
+| **Layer 1** | [AgentGuard](https://github.com/AgentGuardHQ/agentguard) | Policy engine — allow/deny governance hooks |
+| **Layer 2** | [Cisco DefenseClaw](https://github.com/cisco-ai-defense/defenseclaw) | Supply chain — skill scanning + MCP verification |
+| **Layer 3** | **ShellForge** ← you are here | Agent runtime — local execution with full governance |
+
+ShellForge is where the agents actually run. The other layers make sure they behave.
+
+> **Coming soon:** Native integrations with OpenShell (sandbox), DefenseClaw (scanning), and AgentGuard Cloud (observability). [Star this repo](https://github.com/AgentGuardHQ/shellforge) to follow along.
+
+---
 
 ## Quick Start
 
 ```bash
-# 1. Clone
 git clone https://github.com/AgentGuardHQ/shellforge.git
 cd shellforge
+bash scripts/setup.sh       # installs deps, Ollama, pulls model
 
-# 2. Setup (installs deps, Ollama, pulls model)
-bash scripts/setup.sh
-
-# 3. Run an agent
-npm run report                              # weekly status report
-npm run qa                                  # analyze code for test gaps
-npm run agent -- "build a CLI arg parser"   # prototype code
+npm run report               # generate a weekly status report
+npm run qa                   # analyze code for test gaps
+npm run agent -- "prompt"    # prototype code from a prompt
 ```
 
-## Agents
+**Requirements:** macOS (Apple Silicon) or Linux · Node 20+ · ~1.3 GB RAM
 
-| Agent | Input | Output | Use Case |
-|-------|-------|--------|----------|
-| **qa** | Source files | Test suggestions | Find untested code paths |
-| **report** | Git log + agent logs | Markdown report | Weekly status summary |
-| **prototype** | Prompt string | Code snippet | Quick scaffolding |
+---
 
-All agents are deterministic, bounded, and write output to `outputs/` only.
+## What It Does
 
-## Project Structure
+ShellForge runs **local AI agents** powered by [Ollama](https://ollama.com) with full [AgentGuard](https://github.com/AgentGuardHQ/agentguard) governance. Each agent is a bounded TypeScript script — no frameworks, no daemons, no complexity.
 
-```
-shellforge/
-├── agents/                 # Agent implementations
-│   ├── qa-agent.ts         # Code analysis → test suggestions
-│   ├── report-agent.ts     # Git + logs → markdown report
-│   └── prototype-agent.ts  # Prompt → code snippet
-├── config/
-│   ├── ollama.ts           # Ollama HTTP wrapper
-│   ├── agent-config.ts     # Agent definitions + routing
-│   └── memory.ts           # Memory optimization (placeholder)
-├── adapters/
-│   ├── deepagents.ts       # DeepAgents integration (placeholder)
-│   └── opencode.ts         # OpenCode integration (placeholder)
-├── scripts/
-│   ├── setup.sh            # One-time setup
-│   ├── run-agent.sh        # Generic runner with governance
-│   ├── run-qa-agent.sh     # Cron-safe QA wrapper
-│   └── run-report-agent.sh # Cron-safe report wrapper
-├── outputs/
-│   ├── reports/            # Generated markdown reports
-│   └── logs/               # Agent run logs
-├── docs/
-│   ├── architecture.md     # System design + diagrams
-│   └── roadmap.md          # Feature roadmap
-├── agentguard.yaml         # Governance policy
-├── .env.example            # Configuration template
-└── package.json
-```
+### Built-in Agents
 
-## AgentGuard Governance
+| Agent | Command | Input → Output |
+|-------|---------|----------------|
+| 🔍 **QA** | `npm run qa` | Source files → test suggestions |
+| 📊 **Report** | `npm run report` | Git log + activity → markdown summary |
+| ⚡ **Prototype** | `npm run agent -- "prompt"` | Prompt → code snippet |
 
-The `agentguard.yaml` policy enforces:
-
-| Policy | Action | Description |
-|--------|--------|-------------|
-| no-force-push | deny | Block `git push --force` |
-| no-destructive-rm | deny | Block `rm -rf` |
-| file-write-constraints | deny | Restrict writes to `outputs/` |
-| test-before-merge | monitor | Log merge activity (stub) |
-| bounded-execution | deny | 5-minute timeout per agent |
-
-Default mode is **monitor** (log everything, block nothing). Switch to **enforce** when ready:
+### Governance Policies
 
 ```yaml
-mode: enforce  # in agentguard.yaml
+# agentguard.yaml — every agent runs under these rules
+mode: monitor  # → switch to 'enforce' when battle-tested
+
+policies:
+  - no-force-push      # block git push --force
+  - no-destructive-rm  # block rm -rf
+  - file-write-bounds  # agents can only write to outputs/
+  - bounded-execution  # 5-minute timeout per run
 ```
+
+---
+
+## Architecture
+
+```
+Cron / CLI
+    │
+    ▼
+┌─────────────────────────────────┐
+│  🛡️ AgentGuard Policy Layer     │  ← agentguard.yaml
+│  allow/deny · audit · telemetry │
+└───────────────┬─────────────────┘
+                │
+                ▼
+┌─────────────────────────────────┐
+│  🤖 Agent (TypeScript)          │  ← agents/*.ts
+│  input → prompt → model → save  │
+└───────────────┬─────────────────┘
+                │
+        ┌───────┼───────┐
+        ▼       ▼       ▼
+    ┌────────┐ ┌─────┐ ┌──────────┐
+    │ Ollama │ │ Mem │ │ Adapters │
+    │ qwen3  │ │ (…) │ │ (future) │
+    └────────┘ └─────┘ └──────────┘
+```
+
+**Memory budget:** ~1.3 GB (1.7B model) or ~5 GB (7B model). Apple Silicon unified memory makes this efficient.
+
+See [docs/architecture.md](docs/architecture.md) for the full design.
+
+---
 
 ## Configuration
 
-Copy `.env.example` to `.env` and customize:
-
 ```bash
-OLLAMA_MODEL=qwen3:1.7b     # Model to use (any Ollama-supported model)
-OLLAMA_CTX_SIZE=4096         # Context window (lower = less RAM)
-AGENT_TIMEOUT=300            # Max seconds per agent run
+cp .env.example .env
 ```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OLLAMA_MODEL` | `qwen3:1.7b` | Any Ollama-supported model |
+| `OLLAMA_CTX_SIZE` | `4096` | Context window (lower = less RAM) |
+| `AGENT_TIMEOUT` | `300` | Max seconds per agent run |
 
 ### Model Options
 
-| Model | Size | RAM | Speed | Quality |
-|-------|------|-----|-------|---------|
-| qwen3:1.7b | 1.7B | ~1.2 GB | Fast | Good for simple tasks |
-| qwen3:4b | 4B | ~3 GB | Medium | Better reasoning |
-| mistral:7b | 7B | ~5 GB | Slower | Best quality |
+| Model | Params | RAM | Best For |
+|-------|--------|-----|----------|
+| `qwen3:1.7b` | 1.7B | ~1.2 GB | Fast tasks, prototyping |
+| `qwen3:4b` | 4B | ~3 GB | Balanced reasoning |
+| `mistral:7b` | 7B | ~5 GB | Complex analysis |
 
-## Cron Setup
+---
 
-Add to your crontab (`crontab -e`):
+## Cron Automation
 
 ```cron
-# Run QA agent every 10 minutes
+# crontab -e
 */10 * * * * /path/to/shellforge/scripts/run-qa-agent.sh
-
-# Generate report every 30 minutes
 */30 * * * * /path/to/shellforge/scripts/run-report-agent.sh
 ```
 
-Scripts are idempotent — safe for overlapping cron runs (timeout handles long runs).
+All scripts are idempotent and timeout-safe.
 
-## Extending with Frameworks
+---
 
-### DeepAgents
+## Extensibility
 
-For multi-step autonomous planning:
+ShellForge is designed to grow. Adapter interfaces are already defined — swap in real implementations when ready.
 
-```bash
-npm install deepagents
+### Framework Adapters (Planned)
+
+| Framework | Adapter | Status |
+|-----------|---------|--------|
+| [DeepAgents](https://github.com/deepagents) | `adapters/deepagents.ts` | 🔌 Interface ready |
+| [OpenCode](https://github.com/opencode) | `adapters/opencode.ts` | 🔌 Interface ready |
+| NVIDIA OpenShell | — | 🔬 [Research](https://github.com/AgentGuardHQ/agentguard/issues/1036) |
+| Cisco DefenseClaw | — | 🔬 [Research](https://github.com/AgentGuardHQ/agentguard/issues/1036) |
+
+### Memory Optimization (Planned)
+
+`config/memory.ts` exposes a pluggable interface:
+
+```typescript
+initMemoryLayer()   // initialize backend (Google A2A, MemGPT, custom)
+optimizePrompt()    // compress context before model call
+trackUsage()        // monitor token consumption
 ```
 
-Then implement `adapters/deepagents.ts` — the interface is already defined.
-Wire it into `config/agent-config.ts` by adding `framework: 'deepagents'` to any agent config.
+Currently passthrough — swap in a real backend with zero refactor.
 
-### OpenCode
+---
 
-For interactive coding with tool use:
+## The Ecosystem
 
-```bash
-npm install opencode
-```
+ShellForge is part of the **AgentGuard** platform:
 
-Then implement `adapters/opencode.ts`. AgentGuard hooks will automatically
-govern OpenCode's tool calls through the existing policy layer.
+| Project | What It Does |
+|---------|--------------|
+| [**AgentGuard**](https://github.com/AgentGuardHQ/agentguard) | Governance runtime — hooks, policies, telemetry for Claude, Codex, Copilot, Gemini |
+| [**AgentGuard Cloud**](https://github.com/AgentGuardHQ/agentguard-cloud) | SaaS dashboard — observability, session replay, swarm org chart |
+| **ShellForge** | Local agent execution — Ollama + governance on your machine |
 
-See `docs/roadmap.md` for the full integration plan.
+Combined with the emerging open-source security stack (**OpenShell** for sandboxing, **DefenseClaw** for supply chain scanning), this creates a full-stack governed agentic AI platform — from kernel isolation to cloud observability.
 
-## Memory Optimization
+---
 
-`config/memory.ts` defines a pluggable memory layer with three functions:
+## Design Philosophy
 
-- `initMemoryLayer()` — initialize the backend
-- `optimizePrompt()` — compress/optimize prompts before sending to model
-- `trackUsage()` — monitor token consumption
+- **No daemons.** Every agent is a script that runs and exits.
+- **No frameworks.** Raw TypeScript + Ollama HTTP. Add frameworks when you need them.
+- **No cloud required.** Everything runs locally. Cloud telemetry is opt-in.
+- **No magic.** Read any agent in 60 seconds. Fork and customize in 5 minutes.
 
-Currently stubbed (passthrough). When a memory library is ready (Google A2A, MemGPT, etc.),
-swap the implementation — no other files need to change.
+---
 
-## Design Constraints
+## Contributing
 
-- **Max 2 concurrent agents** — Ollama serializes inference
-- **No background daemons** — everything is script-based, exits cleanly
-- **No distributed systems** — single machine only
-- **Low memory priority** — default model fits in ~1.3 GB
-- **Deterministic output** — low temperature, no random seeds
+ShellForge is open source and early. We welcome:
 
-## How It Relates to AgentGuard
+- New agent implementations
+- Framework adapter integrations
+- Memory optimization backends
+- Governance policy templates
 
-This repo is a **local companion** to the AgentGuard ecosystem:
+See [docs/roadmap.md](docs/roadmap.md) for what's planned.
 
-- **[AgentGuard](https://github.com/AgentGuardHQ/agentguard)** — governance runtime (hooks, policies, telemetry)
-- **[AgentGuard Cloud](https://github.com/AgentGuardHQ/agentguard-cloud)** — SaaS dashboard and analytics
-- **ShellForge** (this repo) — local agent execution with governance
+---
 
-The local swarm can optionally send telemetry to AgentGuard Cloud for centralized observability.
+<div align="center">
 
-## License
+**[🌐 Website](https://agentguardhq.github.io/shellforge)** · **[⭐ Star on GitHub](https://github.com/AgentGuardHQ/shellforge)** · **[🛡️ AgentGuard](https://github.com/AgentGuardHQ/agentguard)**
 
-MIT
+*Built with 🔥 by humans and agents*
+
+MIT License
+
+</div>
