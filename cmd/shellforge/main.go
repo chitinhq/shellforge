@@ -557,6 +557,32 @@ func cmdRun(driver, prompt string) {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Env = os.Environ()
+
+	// For Goose: set governed shell so ALL commands go through AgentGuard
+	if driver == "goose" {
+		sfBin, _ := exec.LookPath("shellforge")
+		if sfBin != "" {
+			// Find govern-shell.sh next to the shellforge binary or in known locations
+			governShell := ""
+			for _, path := range []string{
+				filepath.Join(filepath.Dir(sfBin), "..", "share", "shellforge", "govern-shell.sh"),
+				filepath.Join(filepath.Dir(sfBin), "govern-shell.sh"),
+				"scripts/govern-shell.sh",
+				"/usr/local/share/shellforge/govern-shell.sh",
+			} {
+				if _, err := os.Stat(path); err == nil {
+					governShell = path
+					break
+				}
+			}
+			if governShell != "" {
+				cmd.Env = append(cmd.Env, "SHELL="+governShell)
+				cmd.Env = append(cmd.Env, "SHELLFORGE_REAL_SHELL=/bin/bash")
+				fmt.Println("[shellforge] governance: shell wrapper active — every command evaluated")
+			}
+		}
+	}
 
 	if err := cmd.Run(); err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {

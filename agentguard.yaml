@@ -42,8 +42,8 @@ policies:
     match:
       command: "*"
     timeout_seconds: 300
-    action: deny
-    message: "Agent exceeded 5-minute execution limit"
+    action: monitor
+    message: "Agent execution timeout tracking"
 
 telemetry:
   enabled: true
