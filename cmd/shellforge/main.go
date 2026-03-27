@@ -15,6 +15,7 @@ import (
 "github.com/AgentGuardHQ/shellforge/internal/governance"
 "github.com/AgentGuardHQ/shellforge/internal/logger"
 "github.com/AgentGuardHQ/shellforge/internal/ollama"
+"github.com/AgentGuardHQ/shellforge/internal/scheduler"
 )
 
 var version = "0.2.0"
@@ -46,6 +47,12 @@ fmt.Fprintln(os.Stderr, "Usage: shellforge agent \"your prompt\"")
 os.Exit(1)
 }
 cmdAgent(strings.Join(os.Args[2:], " "))
+case "serve":
+configPath := "agents.yaml"
+if len(os.Args) > 2 {
+configPath = os.Args[2]
+}
+cmdServe(configPath)
 case "status":
 cmdStatusFull()
 case "scan":
@@ -73,8 +80,9 @@ Usage:
   shellforge scan [dir]            DefenseClaw supply chain scan
   shellforge version               Print version
 
+  shellforge serve [config]       Daemon mode — run scheduled agent swarm
 Governance:  agentguard.yaml — every tool call evaluated before execution.
-Engines:     native | opencode | deepagents
+Engines:     OpenCode · DeepAgents · Paperclip
 Stack:       RTK · TurboQuant · Ollama · AgentGuard · OpenShell · DefenseClaw
 
 `, version)
@@ -194,6 +202,48 @@ os.Exit(1)
 }
 printResult("prototype-agent", result)
 saveReport("outputs/logs", "prototype", result)
+}
+
+func cmdServe(configPath string) {
+engine := mustGovernance()
+mustOllama()
+
+cfg, err := scheduler.LoadConfig(configPath)
+if err != nil {
+fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
+os.Exit(1)
+}
+
+fmt.Println("=== ShellForge Serve ===")
+fmt.Printf("[serve] model: %s\n", ollama.Model)
+fmt.Printf("[serve] governance: mode=%s, %d policies\n", engine.Mode, len(engine.Policies))
+fmt.Printf("[serve] config: %s (%d agents)\n", configPath, len(cfg.Agents))
+
+// Create runner that uses the existing agent.RunLoop
+run := func(name, system, prompt string, timeoutSec int) error {
+result, err := agent.RunLoop(agent.LoopConfig{
+Agent:       name,
+System:      system,
+UserPrompt:  prompt,
+Model:       ollama.Model,
+MaxTurns:    12,
+TimeoutMs:   timeoutSec * 1000,
+OutputDir:   cfg.LogDir,
+TokenBudget: 3000,
+}, engine)
+if err != nil {
+logger.Error(name, err.Error())
+return err
+}
+printResult(name, result)
+saveReport(cfg.LogDir, name, result)
+return nil
+}
+
+sched := scheduler.New(cfg, run)
+sched.Start()
+fmt.Println("[serve] running — press Ctrl+C to stop")
+sched.Wait()
 }
 
 func cmdScan() {

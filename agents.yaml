@@ -1,0 +1,40 @@
+# agents.yaml — ShellForge agent swarm configuration
+# Run: shellforge serve agents.yaml
+# Tip: set OLLAMA_KV_CACHE_TYPE=q8_0 to halve memory per agent slot
+
+max_parallel: 0  # 0 = auto-detect from available RAM
+log_dir: outputs/logs
+model_ram_gb: 19 # qwen3:30b Q4_K_M — adjust for your model
+
+agents:
+  - name: qa-agent
+    system: "You are a QA engineer. Analyze source code for test gaps and quality issues. Be thorough but concise."
+    prompt: "Run QA analysis on the current repository. Use tools to read files and check for test coverage gaps. Produce a structured report."
+    schedule: "4h"
+    priority: 2
+    timeout: 300
+    enabled: true
+
+  - name: report-agent
+    system: "You are a technical writer. Generate concise markdown status reports."
+    prompt: "Generate a status report from git log and agent outputs in outputs/. Output markdown with Summary, Changes, Recommendations."
+    schedule: "*/30 * * * *"
+    priority: 1
+    timeout: 180
+    enabled: true
+
+  - name: security-scanner
+    system: "You are a security engineer. Scan for vulnerabilities and misconfigurations."
+    prompt: "Check the repository for exposed secrets, insecure dependencies, and misconfigurations. Use run_shell to check git log for .env commits and list_files to find sensitive files."
+    schedule: "12h"
+    priority: 3
+    timeout: 300
+    enabled: true
+
+  - name: slack-notifier
+    system: "You are a notification agent. Summarize recent agent activity for Slack."
+    prompt: "Check outputs/reports/ and outputs/logs/ for recent agent runs. Produce a concise 3-line summary suitable for a Slack message."
+    schedule: "8h"
+    priority: 1
+    timeout: 120
+    enabled: false
