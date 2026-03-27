@@ -47,7 +47,7 @@ cmdReport(repo)
 case "run":
 if len(os.Args) < 3 {
 fmt.Fprintln(os.Stderr, "Usage: shellforge run <driver> \"prompt\"")
-fmt.Fprintln(os.Stderr, "Drivers: claude, copilot, codex, gemini, crush")
+fmt.Fprintln(os.Stderr, "Drivers: aider, claude, copilot, codex, gemini")
 os.Exit(1)
 }
 driver := os.Args[2]
@@ -272,60 +272,22 @@ fmt.Println()
 steps++
 fmt.Printf("── Step %d/%d: Agent drivers ──\n", steps, total)
 
-// On Mac: offer Crush (local models). On server: skip Crush, show API drivers.
+// On Mac/GPU: offer Aider (local models via Ollama). On server: skip, show API drivers.
 if !isServer {
-if _, err := exec.LookPath("crush"); err != nil {
-fmt.Println("  Crush — Go AI coding agent with AgentGuard governance (local models)")
-fmt.Print("  Install Crush? [Y/n] ")
+if _, err := exec.LookPath("aider"); err != nil {
+fmt.Println("  Aider — AI coding agent with native Ollama support (local models)")
+fmt.Print("  Install Aider? [Y/n] ")
 if confirm(reader) {
-fmt.Println("  → Installing Crush (AgentGuardHQ fork with governance)...")
-// Ensure Go is installed (needed to build Crush)
-if _, err := exec.LookPath("go"); err != nil {
-fmt.Println("  → Go not found — installing...")
-if runtime.GOOS == "darwin" {
-run("brew", "install", "go")
+fmt.Println("  → Installing Aider...")
+run("pip3", "install", "aider-chat")
+if _, err := exec.LookPath("aider"); err == nil {
+fmt.Println("  ✓ Aider installed")
 } else {
-run("sh", "-c", "curl -fsSL https://go.dev/dl/go1.23.0.linux-amd64.tar.gz | sudo tar -C /usr/local -xz && sudo ln -sf /usr/local/go/bin/go /usr/local/bin/go")
+fmt.Println("  ⚠ Install failed — try: pip3 install aider-chat")
 }
-if _, err := exec.LookPath("go"); err != nil {
-fmt.Println("  ⚠ Go install failed. Install manually: brew install go")
-fmt.Println("    Then re-run: shellforge setup")
-}
-}
-// Clone, build, and install our governed fork
-crushDir := filepath.Join(os.TempDir(), "shellforge-crush-install")
-os.RemoveAll(crushDir)
-run("git", "clone", "--depth", "1", "https://github.com/AgentGuardHQ/crush.git", crushDir)
-buildCmd := exec.Command("go", "build", "-o", "crush", ".")
-buildCmd.Dir = crushDir
-buildCmd.Stdout = os.Stdout
-buildCmd.Stderr = os.Stderr
-if err := buildCmd.Run(); err != nil {
-fmt.Printf("  ⚠ Build failed: %s\n", err)
-fmt.Println("    Requires Go 1.22+. Check: go version")
-} else {
-// Move binary to /usr/local/bin (always in PATH)
-crushBin := filepath.Join(crushDir, "crush")
-dest := "/usr/local/bin/crush"
-cpCmd := exec.Command("cp", crushBin, dest)
-if err := cpCmd.Run(); err != nil {
-// Try with sudo
-fmt.Println("  → Need permissions to install to /usr/local/bin...")
-run("sudo", "cp", crushBin, dest)
-run("sudo", "chmod", "+x", dest)
-}
-if _, err := exec.LookPath("crush"); err == nil {
-fmt.Println("  ✓ Crush installed to /usr/local/bin/crush")
-fmt.Println("  ✓ AgentGuard governance built in")
-} else {
-fmt.Println("  ⚠ Install failed. Try manually:")
-fmt.Printf("    sudo cp %s /usr/local/bin/crush\n", crushBin)
-}
-}
-os.RemoveAll(crushDir)
 }
 } else {
-fmt.Println("  ✓ Crush installed (local model driver)")
+fmt.Println("  ✓ Aider installed (local model driver)")
 }
 }
 
@@ -534,11 +496,17 @@ var drivers = map[string]driverConfig{
 		hasHooks:    false,
 		initHint:    "agentguard gemini-init",
 	},
-	"crush": {
-		binary:   "crush",
-		buildCmd: func(p string) []string { return []string{"--yolo", "run", "--quiet", p} },
+	"aider": {
+		binary: "aider",
+		buildCmd: func(p string) []string {
+			model := os.Getenv("OLLAMA_MODEL")
+			if model == "" {
+				model = ollama.Model
+			}
+			return []string{"--model", "ollama/" + model, "--yes-always", "--no-git", "--message", p}
+		},
 		interactive: []string{},
-		hasHooks:    true,
+		hasHooks:    false,
 		initHint:    "",
 	},
 }

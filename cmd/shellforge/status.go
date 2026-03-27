@@ -63,7 +63,7 @@ func cmdStatusFull() {
 		desc    string
 		install string
 	}{
-		{"crush", "crush", "Charm AI coding agent (Go, TUI + headless)", "brew install charmbracelet/tap/crush"},
+		{"aider", "aider", "AI coding agent with native Ollama support", "pip3 install aider-chat"},
 		{"claude", "claude", "Claude Code CLI", "npm i -g @anthropic-ai/claude-code"},
 		{"copilot", "github-copilot-cli", "GitHub Copilot CLI", "gh extension install github/gh-copilot"},
 		{"codex", "codex", "OpenAI Codex CLI", "npm i -g @openai/codex"},
