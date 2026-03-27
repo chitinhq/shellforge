@@ -430,31 +430,30 @@
         <span class="prompt">$</span> <span class="cmd">brew tap AgentGuardHQ/tap</span><br>
         <span class="prompt">$</span> <span class="cmd">brew install shellforge</span><br>
         <span class="prompt">$</span> <span class="cmd">shellforge setup</span><br>
-        <span class="output">=== ShellForge Setup ===</span><br>
-        <span class="output">✓ Go 1.23 installed</span><br>
-        <span class="output">✓ Ollama running</span><br>
-        <span class="output">✓ Model ready: qwen3:1.7b</span><br>
-        <span class="output">=== ShellForge Setup Complete ===</span><br>
+        <span class="output">── Step 1/6: Ollama ──</span><br>
+        <span class="output">  ✓ Ollama running</span><br>
+        <span class="output">  ✓ Model ready: qwen3:8b</span><br>
+        <span class="output">── Step 2/6: Governance ──</span><br>
+        <span class="output">  ✓ agentguard.yaml created (enforce, 3 policies)</span><br>
+        <span class="output">── Step 3/6: Dagu ──</span><br>
+        <span class="output">  ✓ Dagu installed</span><br>
+        <span class="accent">  Setup Complete</span><br>
         <br>
-        <span class="prompt">$</span> <span class="cmd">./shellforge qa</span><br>
-        <span class="output">[🛡️ AgentGuard] Loading governance policy...</span><br>
-        <span class="output">[🛡️ AgentGuard] Mode: enforce | Rules: 5</span><br>
-        <span class="output">[🦙 Ollama] Connected to localhost:11434</span><br>
-        <span class="output">[🤖 ShellForge] Starting QA agent...</span><br>
-        <span class="output">[🛡️ AgentGuard] policy: allow | tool: read_file | target: src/</span><br>
-        <span class="output">[🛡️ AgentGuard] policy: <span class="red">DENY</span>  | tool: run_shell | target: rm -rf /</span><br>
-        <span class="accent">[✅ QA] Analysis complete — 3 issues found, 0 critical</span><br>
+        <span class="prompt">$</span> <span class="cmd">shellforge agent <span class="blue">"find test gaps in this repo"</span></span><br>
+        <span class="output">[governance] loaded — enforce, 3 policies</span><br>
+        <span class="output">[intent] list_files via json_block</span><br>
+        <span class="output">[governance] allow | list_files</span><br>
+        <span class="output">[intent] read_file via json_block</span><br>
+        <span class="output">[governance] allow | read_file</span><br>
+        <span class="output">[intent] run_shell via json_block</span><br>
+        <span class="output">[governance] <span class="red">DENY</span> | rm -rf / (destructive)</span><br>
+        <span class="output">[correction] sending feedback to model...</span><br>
+        <span class="output">[intent] run_shell via json_block</span><br>
+        <span class="output">[governance] allow | go test ./...</span><br>
+        <span class="accent">done — 4 turns, 4 tool calls, 1 denial corrected</span><br>
         <br>
-        <span class="prompt">$</span> <span class="cmd">./shellforge agent <span class="blue">"build a REST health endpoint"</span></span><br>
-        <span class="output">[🛡️ AgentGuard] Loading governance policy...</span><br>
-        <span class="output">[🛡️ AgentGuard] Mode: enforce | Rules: 5</span><br>
-        <span class="output">[🦙 Ollama] Connected to localhost:11434</span><br>
-        <span class="output">[🤖 ShellForge] Starting agent loop...</span><br>
-        <span class="output">[🔧 Tool] read_file → src/main.go (2.1KB)</span><br>
-        <span class="output">[🛡️ AgentGuard] policy: allow | tool: read_file</span><br>
-        <span class="output">[🔧 Tool] run_shell → go test ./...</span><br>
-        <span class="output">[🛡️ AgentGuard] policy: allow | tool: run_shell</span><br>
-        <span class="accent">[✅ Agent] Task complete — 2 files modified, all tests pass</span>
+        <span class="prompt">$</span> <span class="cmd">shellforge run claude <span class="blue">"review open PRs"</span></span><br>
+        <span class="accent">[governed] Claude Code with AgentGuard hooks</span>
       </div>
     </div>
   </div>
@@ -488,13 +487,13 @@
       </div>
       <div class="card">
         <div class="card-icon">🔌</div>
-        <h3>Crush Execution Engine</h3>
-        <p>Powered by <a href="https://github.com/charmbracelet/crush">Crush</a> — a Go-native AI coding agent with TUI + headless mode. ShellForge governs every tool call Crush makes.</p>
+        <h3>Multi-Driver Governance</h3>
+        <p>Govern any CLI agent — <a href="https://github.com/AgentGuardHQ/crush">Crush</a> (local), Claude Code, Copilot CLI, Codex, Gemini. One governance policy across all drivers.</p>
       </div>
       <div class="card">
         <div class="card-icon">🔄</div>
-        <h3>24/7 Swarm Mode</h3>
-        <p><code>shellforge serve</code> — daemon mode with memory-aware scheduling. Auto-detects RAM, queues agents, prevents OOM. Run a local agent swarm on your Mac.</p>
+        <h3>Dagu Orchestration</h3>
+        <p><code>shellforge swarm</code> — YAML DAG workflows with web dashboard. Schedule agents, define dependencies, run a 24/7 swarm on your Mac or Linux box.</p>
       </div>
     </div>
   </div>
@@ -715,7 +714,7 @@
       <span class="prompt">$</span> brew tap AgentGuardHQ/tap<br>
       <span class="prompt">$</span> brew install shellforge<br>
       <span class="prompt">$</span> shellforge setup<br>
-      <span class="prompt">$</span> shellforge run crush "analyze this repo"
+      <span class="prompt">$</span> shellforge agent "analyze this repo for test gaps"
     </div>
     <br><br>
     <div class="hero-actions">
