@@ -3,6 +3,7 @@
 package main
 
 import (
+"bufio"
 "fmt"
 "os"
 "os/exec"
@@ -92,41 +93,189 @@ Stack:       Ollama · AgentGuard · Dagu · RTK
 }
 
 func cmdSetup() {
-fmt.Println("=== ShellForge Setup ===")
-fmt.Printf("✓ Go %s\n", runtime.Version())
+fmt.Println()
+fmt.Println("╔══════════════════════════════════════╗")
+fmt.Println("║     ShellForge Setup Wizard          ║")
+fmt.Println("╚══════════════════════════════════════╝")
+fmt.Println()
 
+reader := bufio.NewReader(os.Stdin)
+steps := 0
+total := 4
+
+// ── Step 1: Ollama ──
+steps++
+fmt.Printf("── Step %d/%d: Ollama (local LLM inference) ──\n", steps, total)
 if _, err := exec.LookPath("ollama"); err != nil {
-fmt.Println("→ Installing Ollama...")
+fmt.Print("  Ollama not found. Install? [Y/n] ")
+if confirm(reader) {
+fmt.Println("  → Installing Ollama...")
 if runtime.GOOS == "darwin" {
 run("brew", "install", "ollama")
 } else {
 run("sh", "-c", "curl -fsSL https://ollama.ai/install.sh | sh")
 }
+}
 } else {
-fmt.Println("✓ Ollama installed")
+fmt.Println("  ✓ Ollama installed")
 }
 
 if !ollama.IsRunning() {
-fmt.Println("→ Starting Ollama...")
+fmt.Println("  → Starting Ollama...")
 cmd := exec.Command("ollama", "serve")
 cmd.Start()
 time.Sleep(3 * time.Second)
 }
 if ollama.IsRunning() {
-fmt.Println("✓ Ollama running")
+fmt.Println("  ✓ Ollama running")
 } else {
-fmt.Println("⚠ Ollama not responding — start manually: ollama serve")
+fmt.Println("  ⚠ Ollama not responding")
+fmt.Println("    Start it manually: ollama serve")
+fmt.Println("    Then re-run: shellforge setup")
 }
 
-model := ollama.Model
-fmt.Printf("→ Pulling model %s...\n", model)
+// Pick model
+fmt.Println()
+fmt.Println("  Available models:")
+fmt.Println("    1) qwen3:1.7b  — 1.2 GB RAM, fastest")
+fmt.Println("    2) qwen3:8b    — 6 GB RAM, balanced (recommended)")
+fmt.Println("    3) qwen3:30b   — 19 GB RAM, best quality (M4 Pro 48GB+)")
+fmt.Println("    4) phi4         — 9 GB RAM, Microsoft")
+fmt.Println("    5) other       — enter a custom model name")
+fmt.Print("  Pick model [2]: ")
+choice := readLine(reader)
+model := "qwen3:8b"
+switch strings.TrimSpace(choice) {
+case "1":
+model = "qwen3:1.7b"
+case "2", "":
+model = "qwen3:8b"
+case "3":
+model = "qwen3:30b"
+case "4":
+model = "phi4"
+case "5":
+fmt.Print("  Model name: ")
+model = readLine(reader)
+default:
+model = strings.TrimSpace(choice)
+}
+fmt.Printf("  → Pulling %s (this may take a few minutes)...\n", model)
 run("ollama", "pull", model)
-fmt.Printf("✓ Model ready: %s\n", model)
+fmt.Printf("  ✓ Model ready: %s\n", model)
 
+// Set env hint
+if model != ollama.Model {
+fmt.Printf("  Note: set OLLAMA_MODEL=%s before running shellforge\n", model)
+}
+fmt.Println()
+
+// ── Step 2: Governance ──
+steps++
+fmt.Printf("── Step %d/%d: Governance (agentguard.yaml) ──\n", steps, total)
 configPath := findGovernanceConfig()
 if configPath == "" {
-fmt.Println("→ Creating default agentguard.yaml...")
-defaultPolicy := `# agentguard.yaml — ShellForge governance policy
+fmt.Print("  No agentguard.yaml found. Create default? [Y/n] ")
+if confirm(reader) {
+writeDefaultGovernanceConfig()
+configPath = "agentguard.yaml"
+}
+}
+if configPath != "" {
+eng, err := governance.NewEngine(configPath)
+if err != nil {
+fmt.Printf("  ⚠ Config error: %s\n", err)
+} else {
+fmt.Printf("  ✓ Governance: mode=%s, %d policies\n", eng.Mode, len(eng.Policies))
+}
+}
+fmt.Println()
+
+// ── Step 3: Dagu (orchestration) ──
+steps++
+fmt.Printf("── Step %d/%d: Dagu (orchestration + web UI) ──\n", steps, total)
+if _, err := exec.LookPath("dagu"); err != nil {
+fmt.Print("  Dagu not found. Install? [Y/n] ")
+if confirm(reader) {
+fmt.Println("  → Installing Dagu...")
+if runtime.GOOS == "darwin" {
+run("brew", "install", "dagu")
+} else {
+run("sh", "-c", "curl -sL https://raw.githubusercontent.com/dagu-org/dagu/main/scripts/installer.sh | bash")
+}
+} else {
+fmt.Println("  Skipped (install later: brew install dagu)")
+}
+} else {
+fmt.Println("  ✓ Dagu installed")
+}
+
+// Create example DAGs
+if _, err := os.Stat("dags"); os.IsNotExist(err) {
+fmt.Print("  Create example swarm workflows? [Y/n] ")
+if confirm(reader) {
+os.MkdirAll("dags", 0o755)
+writeExampleDAGs()
+fmt.Println("  ✓ dags/sdlc-swarm.yaml created")
+}
+} else {
+entries, _ := filepath.Glob("dags/*.yaml")
+fmt.Printf("  ✓ dags/ exists (%d workflows)\n", len(entries))
+}
+fmt.Println()
+
+// ── Step 4: RTK (optional) ──
+steps++
+fmt.Printf("── Step %d/%d: RTK (token compression, optional) ──\n", steps, total)
+if _, err := exec.LookPath("rtk"); err != nil {
+fmt.Print("  RTK not found. Install? [y/N] ")
+input := readLine(reader)
+if strings.HasPrefix(strings.ToLower(strings.TrimSpace(input)), "y") {
+fmt.Println("  → Installing RTK...")
+run("npm", "i", "-g", "@anthropic/rtk")
+} else {
+fmt.Println("  Skipped (saves 70-90% tokens on shell output)")
+}
+} else {
+fmt.Println("  ✓ RTK installed")
+}
+fmt.Println()
+
+// ── Output dirs ──
+os.MkdirAll("outputs/logs", 0o755)
+os.MkdirAll("outputs/reports", 0o755)
+
+// ── Summary ──
+fmt.Println("╔══════════════════════════════════════╗")
+fmt.Println("║     Setup Complete                   ║")
+fmt.Println("╚══════════════════════════════════════╝")
+fmt.Println()
+fmt.Println("  Quick start:")
+fmt.Printf("    shellforge agent \"describe this project\"")
+fmt.Println()
+fmt.Println()
+fmt.Println("  Run a swarm:")
+fmt.Println("    dagu server --dags=./dags         # web UI at :8080")
+fmt.Println("    dagu start dags/sdlc-swarm.yaml   # run now")
+fmt.Println()
+fmt.Printf("  Tip: export OLLAMA_MODEL=%s\n", model)
+fmt.Println("  Tip: export OLLAMA_KV_CACHE_TYPE=q8_0   # halves memory per agent")
+fmt.Println()
+}
+
+func confirm(r *bufio.Reader) bool {
+input := readLine(r)
+trimmed := strings.TrimSpace(strings.ToLower(input))
+return trimmed == "" || trimmed == "y" || trimmed == "yes"
+}
+
+func readLine(r *bufio.Reader) string {
+line, _ := r.ReadString('\n')
+return strings.TrimRight(line, "\r\n")
+}
+
+func writeDefaultGovernanceConfig() {
+policy := `# agentguard.yaml — ShellForge governance policy
 # Mode: enforce (block violations) or monitor (log only)
 mode: enforce
 
@@ -154,35 +303,33 @@ policies:
     action: deny
     message: "Access to secrets/keys is not allowed"
 `
-if err := os.WriteFile("agentguard.yaml", []byte(defaultPolicy), 0o644); err != nil {
-fmt.Printf("⚠ Could not create agentguard.yaml: %s\n", err)
+if err := os.WriteFile("agentguard.yaml", []byte(policy), 0o644); err != nil {
+fmt.Printf("  ⚠ Could not create agentguard.yaml: %s\n", err)
 } else {
-configPath = "agentguard.yaml"
-fmt.Println("✓ Governance: agentguard.yaml created (enforce mode, 3 policies)")
-}
-}
-if configPath != "" {
-eng, err := governance.NewEngine(configPath)
-if err != nil {
-fmt.Printf("⚠ Governance config error: %s\n", err)
-} else {
-fmt.Printf("✓ Governance: mode=%s, %d policies\n", eng.Mode, len(eng.Policies))
+fmt.Println("  ✓ agentguard.yaml created (enforce mode, 3 policies)")
 }
 }
 
-// Check for optional tools
-if _, err := exec.LookPath("rtk"); err == nil {
-fmt.Println("✓ RTK installed (token compression)")
-} else {
-fmt.Println("  RTK not found (optional — install: npm i -g @anthropic/rtk)")
-}
+func writeExampleDAGs() {
+dag := `# sdlc-swarm.yaml — Daily SDLC agent swarm
+schedule: "0 9 * * *"
 
-os.MkdirAll("outputs/logs", 0o755)
-os.MkdirAll("outputs/reports", 0o755)
-fmt.Println("✓ Output directories ready")
-fmt.Println("=== ShellForge Setup Complete ===")
-fmt.Println()
-fmt.Println("Next: shellforge agent \"describe what this project does\"")
+steps:
+  - name: qa-analysis
+    command: shellforge agent "Analyze source code for test gaps and quality issues. Use read_file and list_files. Produce a structured report."
+
+  - name: security-scan
+    command: shellforge agent "Check for exposed secrets, insecure dependencies, and misconfigurations."
+    depends:
+      - qa-analysis
+
+  - name: daily-report
+    command: shellforge agent "Generate a daily status report from git log and previous agent findings."
+    depends:
+      - qa-analysis
+      - security-scan
+`
+os.WriteFile("dags/sdlc-swarm.yaml", []byte(dag), 0o644)
 }
 
 func cmdQA(target string) {
