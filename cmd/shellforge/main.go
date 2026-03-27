@@ -19,7 +19,7 @@ import (
 "github.com/AgentGuardHQ/shellforge/internal/scheduler"
 )
 
-var version = "0.2.0"
+var version = "0.3.0"
 
 func main() {
 if len(os.Args) < 2 {
@@ -42,6 +42,18 @@ if len(os.Args) > 2 {
 repo = os.Args[2]
 }
 cmdReport(repo)
+case "run":
+if len(os.Args) < 3 {
+fmt.Fprintln(os.Stderr, "Usage: shellforge run <driver> \"prompt\"")
+fmt.Fprintln(os.Stderr, "Drivers: claude, copilot, codex, gemini, crush")
+os.Exit(1)
+}
+driver := os.Args[2]
+prompt := ""
+if len(os.Args) > 3 {
+prompt = strings.Join(os.Args[3:], " ")
+}
+cmdRun(driver, prompt)
 case "agent":
 if len(os.Args) < 3 {
 fmt.Fprintln(os.Stderr, "Usage: shellforge agent \"your prompt\"")
@@ -75,16 +87,17 @@ func printUsage() {
 fmt.Printf(`ShellForge %s — local governed agent runtime
 
 Usage:
-  shellforge setup                 Install Ollama, pull model, verify stack
-  shellforge qa [target]           QA analysis with tool use + governance
-  shellforge report [repo]         Weekly status report from git + logs
-  shellforge agent "prompt"        Run any task with agentic tool use
-  shellforge status                Full ecosystem health check
-  shellforge scan [dir]            DefenseClaw supply chain scan
-  shellforge version               Print version
+  shellforge run <driver> "prompt"  Run a governed agent (claude, copilot, codex, gemini, crush)
+  shellforge setup                  Install Ollama, pull model, verify stack
+  shellforge qa [target]            QA analysis with tool use + governance
+  shellforge report [repo]          Weekly status report from git + logs
+  shellforge agent "prompt"         Run any task with agentic tool use
+  shellforge status                 Full ecosystem health check
+  shellforge scan [dir]             DefenseClaw supply chain scan
+  shellforge version                Print version
 
-  shellforge serve [config]       Simple daemon mode (built-in scheduler)
-  shellforge swarm                Setup Dagu orchestration (DAG workflows + web UI)
+  shellforge serve [config]        Simple daemon mode (built-in scheduler)
+  shellforge swarm                 Setup Dagu orchestration (DAG workflows + web UI)
 
 Governance:  agentguard.yaml — every tool call evaluated before execution.
 Stack:       Ollama · AgentGuard · Dagu · RTK
@@ -330,6 +343,109 @@ steps:
       - security-scan
 `
 os.WriteFile("dags/sdlc-swarm.yaml", []byte(dag), 0o644)
+}
+
+// ── Driver configuration ──
+
+type driverConfig struct {
+	binary       string   // CLI binary name
+	buildCmd     func(string) []string // build command args from prompt
+	interactive  []string // args when no prompt given
+	hasHooks     bool     // whether AgentGuard hooks are configured for this driver
+	initHint     string   // command to set up hooks
+}
+
+var drivers = map[string]driverConfig{
+	"claude": {
+		binary:   "claude",
+		buildCmd: func(p string) []string { return []string{"--dangerously-skip-permissions", "-p", p} },
+		interactive: []string{},
+		hasHooks:    true,
+		initHint:    "agentguard claude-init",
+	},
+	"copilot": {
+		binary:   "copilot-cli",
+		buildCmd: func(p string) []string { return []string{"--prompt", p} },
+		interactive: []string{},
+		hasHooks:    true,
+		initHint:    "agentguard copilot-init",
+	},
+	"codex": {
+		binary:   "codex",
+		buildCmd: func(p string) []string { return []string{"--quiet", "--prompt", p} },
+		interactive: []string{},
+		hasHooks:    true,
+		initHint:    "agentguard codex-init",
+	},
+	"gemini": {
+		binary:   "gemini",
+		buildCmd: func(p string) []string { return []string{"--prompt", p} },
+		interactive: []string{},
+		hasHooks:    false,
+		initHint:    "agentguard gemini-init",
+	},
+	"crush": {
+		binary:   "crush",
+		buildCmd: func(p string) []string { return []string{"-p", p, "-q"} },
+		interactive: []string{},
+		hasHooks:    true,
+		initHint:    "agentguard crush-init",
+	},
+}
+
+func cmdRun(driver, prompt string) {
+	dc, ok := drivers[driver]
+	if !ok {
+		fmt.Fprintf(os.Stderr, "Unknown driver: %s\n", driver)
+		fmt.Fprintln(os.Stderr, "Available drivers: claude, copilot, codex, gemini, crush")
+		os.Exit(1)
+	}
+
+	// Check driver CLI is installed
+	if _, err := exec.LookPath(dc.binary); err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: %s not found in PATH\n", dc.binary)
+		fmt.Fprintf(os.Stderr, "Install %s and try again.\n", dc.binary)
+		os.Exit(1)
+	}
+
+	// Check governance config exists
+	configPath := findGovernanceConfig()
+	if configPath == "" {
+		fmt.Fprintln(os.Stderr, "ERROR: agentguard.yaml not found")
+		fmt.Fprintln(os.Stderr, "Run: shellforge setup")
+		os.Exit(1)
+	}
+
+	// Warn if hooks not configured for this driver
+	if !dc.hasHooks {
+		fmt.Fprintf(os.Stderr, "WARNING: Governance hooks not configured for %s. Run: %s\n", driver, dc.initHint)
+	}
+
+	// Build command args
+	var args []string
+	if prompt != "" {
+		args = dc.buildCmd(prompt)
+	} else {
+		args = dc.interactive
+	}
+
+	// Log the run
+	ts := time.Now().Format(time.RFC3339)
+	fmt.Printf("[shellforge] %s — driver=%s prompt=%q\n", ts, driver, prompt)
+
+	// Spawn driver as subprocess with passthrough I/O
+	cmd := exec.Command(dc.binary, args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			os.Exit(exitErr.ExitCode())
+		}
+		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
+		os.Exit(1)
+	}
 }
 
 func cmdQA(target string) {

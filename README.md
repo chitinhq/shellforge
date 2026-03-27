@@ -113,6 +113,7 @@ shellforge status
 
 | Command | Description |
 |---------|-------------|
+| `shellforge run <driver> "prompt"` | Run a governed agent (claude, copilot, codex, gemini, crush) |
 | `shellforge setup` | Install Ollama, create governance config, verify stack |
 | `shellforge agent "prompt"` | Run a governed agent — every tool call checked |
 | `shellforge qa [dir]` | QA analysis — find test gaps and issues |
@@ -120,6 +121,29 @@ shellforge status
 | `shellforge serve agents.yaml` | Daemon mode — run a 24/7 agent swarm |
 | `shellforge status` | Show ecosystem health |
 | `shellforge version` | Print version |
+
+---
+
+## Multi-Driver Governance
+
+ShellForge governs any CLI agent driver via AgentGuard hooks. Each driver keeps its own model and agent loop — ShellForge ensures governance is active and spawns the driver as a subprocess.
+
+```bash
+# Run any driver with governance
+shellforge run claude "review this code"
+shellforge run codex "generate tests"
+shellforge run copilot "update docs"
+shellforge run gemini "security audit"
+shellforge run crush "analyze test gaps"
+```
+
+Orchestrate multiple drivers in a single Dagu DAG:
+
+```bash
+dagu start dags/multi-driver-swarm.yaml
+```
+
+See `dags/multi-driver-swarm.yaml` and `dags/workspace-swarm.yaml` for examples.
 
 ---
 

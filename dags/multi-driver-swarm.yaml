@@ -1,0 +1,27 @@
+# multi-driver-swarm.yaml — Multi-driver agent swarm
+# Uses different CLI drivers for different tasks.
+# Each driver is governed by AgentGuard via hooks.
+#
+# Run: dagu start dags/multi-driver-swarm.yaml
+
+schedule: "0 */3 * * *"  # every 3 hours
+
+steps:
+  - name: claude-code-review
+    command: shellforge run claude "Review open PRs in this repo. Check for bugs, security issues, and style violations. Comment on any issues found."
+
+  - name: codex-test-gen
+    command: shellforge run codex "Generate missing tests for any untested functions. Focus on edge cases and error paths."
+    depends:
+      - claude-code-review
+
+  - name: copilot-docs-sync
+    command: shellforge run copilot "Check if README and docs are in sync with the code. Update any stale documentation."
+    depends:
+      - claude-code-review
+
+  - name: gemini-security-audit
+    command: shellforge run gemini "Perform a security audit of this codebase. Check for exposed secrets, SQL injection, XSS, and dependency vulnerabilities."
+    depends:
+      - codex-test-gen
+      - copilot-docs-sync
