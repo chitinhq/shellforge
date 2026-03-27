@@ -484,12 +484,12 @@
       <div class="card">
         <div class="card-icon">🧠</div>
         <h3>Memory-Optimized</h3>
-        <p>RTK strips 70-90% of terminal noise before the LLM sees it. TurboQuant compresses KV cache 6x — run 14B models on 8GB Macs.</p>
+        <p>RTK strips 70-90% of terminal noise before the LLM sees it. KV cache quantization doubles agent capacity on 8GB Macs.</p>
       </div>
       <div class="card">
         <div class="card-icon">🔌</div>
-        <h3>Three Execution Engines</h3>
-        <p>OpenCode for AI coding, DeepAgents for multi-step planning, Paperclip for multi-agent orchestration. ShellForge wraps them all with governance.</p>
+        <h3>Crush Execution Engine</h3>
+        <p>Powered by <a href="https://github.com/charmbracelet/crush">Crush</a> — a Go-native AI coding agent with TUI + headless mode. ShellForge governs every tool call Crush makes.</p>
       </div>
       <div class="card">
         <div class="card-icon">🔄</div>
@@ -531,9 +531,9 @@
       </div>
       <div class="stack-connector">↓</div>
       <div class="stack-layer" style="border-color: var(--accent); background: rgba(255,107,43,0.03);">
-        <span class="layer-tag">AGENT</span>
-        <span class="layer-name">🔥 ShellForge</span>
-        <span class="layer-desc">Go binary — agent loop, tool calls, task execution</span>
+        <span class="layer-tag">EXECUTE</span>
+        <span class="layer-name">💻 Crush — AI Coding Agent</span>
+        <span class="layer-desc">Go-native agent loop with TUI + headless mode</span>
       </div>
       <div class="stack-connector">↓</div>
       <div class="stack-layer" style="border-color: var(--green); border-width: 2px; background: rgba(81,207,102,0.05);">
@@ -605,7 +605,7 @@
 <section class="ecosystem" id="ecosystem">
   <div class="container">
     <h2 class="section-title">The Full Stack</h2>
-    <p class="section-sub">Nine technologies. One governed agent runtime. Here's how they fit together.</p>
+    <p class="section-sub">Seven technologies. One governed agent runtime. Here's how they fit together.</p>
 
     <!-- Flow diagram -->
     <div class="stack-diagram" style="margin-bottom: 50px;">
@@ -622,21 +622,15 @@
       </div>
       <div class="stack-connector">↓</div>
       <div class="stack-layer">
-        <span class="layer-tag" style="min-width: 80px; background: rgba(177,151,252,0.15); color: var(--purple);">MEMORY</span>
-        <span class="layer-name">🧠 TurboQuant <span style="color:var(--muted);font-weight:400;font-size:0.85rem;">(Google, ICLR 2026)</span></span>
-        <span class="layer-desc">6x KV cache compression — run 14B models on 8GB Macs</span>
-      </div>
-      <div class="stack-connector">↓</div>
-      <div class="stack-layer">
         <span class="layer-tag" style="min-width: 80px;">MODEL</span>
         <span class="layer-name">🦙 Ollama</span>
         <span class="layer-desc">Local inference — qwen3, mistral, any GGUF model</span>
       </div>
       <div class="stack-connector">↓</div>
       <div class="stack-layer" style="border-color: var(--accent);">
-        <span class="layer-tag" style="min-width: 80px;">ENGINES</span>
-        <span class="layer-name">🔥 ShellForge — OpenCode · DeepAgents · Paperclip</span>
-        <span class="layer-desc">Three execution engines — coding, planning, multi-agent orchestration</span>
+        <span class="layer-tag" style="min-width: 80px;">EXECUTE</span>
+        <span class="layer-name">💻 Crush <span style="color:var(--muted);font-weight:400;font-size:0.85rem;">(Charm)</span></span>
+        <span class="layer-desc">Go-native AI coding agent — TUI + headless, governed by ShellForge</span>
       </div>
       <div class="stack-connector">↓ agent wants to: write file, run shell, push git</div>
       <div class="stack-layer" style="border-color: var(--green); border-width: 2px; background: rgba(81,207,102,0.05);">
@@ -669,56 +663,45 @@
       <div class="eco-card">
         <div class="eco-logo">🔥</div>
         <h4>ShellForge</h4>
-        <p>Local agent runtime<br><strong>Runs the agents</strong></p>
+        <p>Governed runtime<br><strong>The control layer</strong></p>
+      </div>
+      <div class="eco-card">
+        <div class="eco-logo">💻</div>
+        <h4>Crush</h4>
+        <p>AI coding agent<br><strong>Executes the work</strong></p>
       </div>
       <div class="eco-card">
         <div class="eco-logo">🛡️</div>
         <h4>AgentGuard</h4>
-        <p>Policy engine + hooks<br><strong>Controls the agents</strong></p>
+        <p>Governance kernel<br><strong>Enforces policy</strong></p>
       </div>
       <div class="eco-card">
         <div class="eco-logo">🦙</div>
         <h4>Ollama</h4>
-        <p>Local LLM serving<br><strong>Powers the agents</strong></p>
+        <p>Local LLM inference<br><strong>Powers the model</strong></p>
       </div>
-      <div class="eco-card coming">
+      <div class="eco-card">
         <div class="eco-logo">⚡</div>
         <h4>RTK</h4>
-        <p>Rust Token Killer<br><strong>70-90% fewer tokens</strong></p>
+        <p>Token compression<br><strong>70-90% fewer tokens</strong></p>
       </div>
       <div class="eco-card coming">
-        <div class="eco-logo">🧠</div>
-        <h4>TurboQuant</h4>
-        <p>Google KV compression<br><strong>6x less memory</strong></p>
-      </div>
-      <div class="eco-card coming">
-        <div class="eco-logo">🐾</div>
-        <h4>DefenseClaw</h4>
-        <p>Cisco supply chain<br><strong>Scans the skills</strong></p>
+        <div class="eco-logo">📋</div>
+        <h4>Dagu</h4>
+        <p>Workflow orchestration<br><strong>Schedules the swarm</strong></p>
       </div>
       <div class="eco-card coming">
         <div class="eco-logo">🔒</div>
         <h4>OpenShell</h4>
-        <p>NVIDIA kernel sandbox<br><strong>Isolates the process</strong></p>
-      </div>
-      <div class="eco-card coming">
-        <div class="eco-logo">🤖</div>
-        <h4>DeepAgents</h4>
-        <p>Multi-step planning<br><strong>Thinks for the agents</strong></p>
-      </div>
-      <div class="eco-card coming">
-        <div class="eco-logo">📎</div>
-        <h4>Paperclip</h4>
-        <p>Agent orchestration<br><strong>Organizes the agents</strong></p>
+        <p>Kernel sandbox<br><strong>Isolates the process</strong></p>
       </div>
     </div>
 
     <p class="teaser-text">
-      <strong>RTK</strong> compresses the input. <strong>TurboQuant</strong> compresses the memory.<br>
-      <strong>Ollama</strong> runs the model. <strong>OpenCode</strong> codes. <strong>DeepAgents</strong> plans. <strong>Paperclip</strong> orchestrates.<br>
-      <strong>AgentGuard</strong> governs. <strong>DefenseClaw</strong> scans. <strong>OpenShell</strong> sandboxes.<br><br>
+      <strong>Crush</strong> executes. <strong>AgentGuard</strong> governs. <strong>Ollama</strong> infers.<br>
+      <strong>RTK</strong> compresses. <strong>Dagu</strong> orchestrates. <strong>OpenShell</strong> sandboxes.<br><br>
       All open source. All local. All on your Mac.<br><br>
-      <em>Integrations landing throughout 2026. <a href="https://github.com/AgentGuardHQ/shellforge">Star the repo</a> to follow along.</em>
+      <em><a href="https://github.com/AgentGuardHQ/shellforge">Star the repo</a> to follow along.</em>
     </p>
   </div>
 </section>
@@ -732,7 +715,7 @@
       <span class="prompt">$</span> brew tap AgentGuardHQ/tap<br>
       <span class="prompt">$</span> brew install shellforge<br>
       <span class="prompt">$</span> shellforge setup<br>
-      <span class="prompt">$</span> shellforge status
+      <span class="prompt">$</span> shellforge run crush "analyze this repo"
     </div>
     <br><br>
     <div class="hero-actions">

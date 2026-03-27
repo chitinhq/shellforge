@@ -1,19 +1,19 @@
 <div align="center">
 
-# 🔥 ShellForge
+# ShellForge
 
-**Governed local AI agents — a single Go binary, nine integrations, zero cloud.**
+**Governed local AI agents — one Go binary, zero cloud.**
 
 [![Go](https://img.shields.io/badge/Go-1.18+-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev)
-[![GitHub Pages](https://img.shields.io/badge/🌐_Live_Site-agentguardhq.github.io/shellforge-ff6b2b?style=for-the-badge)](https://agentguardhq.github.io/shellforge)
+[![GitHub Pages](https://img.shields.io/badge/Live_Site-agentguardhq.github.io/shellforge-ff6b2b?style=for-the-badge)](https://agentguardhq.github.io/shellforge)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 [![AgentGuard](https://img.shields.io/badge/Governed_by-AgentGuard-green?style=for-the-badge)](https://github.com/AgentGuardHQ/agentguard)
 
 *Run autonomous AI agents on your machine with policy enforcement on every tool call. No cloud. No API keys. No data leaves your laptop.*
 
-[🌐 Website](https://agentguardhq.github.io/shellforge) · [📖 Docs](docs/architecture.md) · [🗺️ Roadmap](docs/roadmap.md) · [🛡️ AgentGuard](https://github.com/AgentGuardHQ/agentguard)
+[Website](https://agentguardhq.github.io/shellforge) · [Docs](docs/architecture.md) · [Roadmap](docs/roadmap.md) · [AgentGuard](https://github.com/AgentGuardHQ/agentguard)
 
-<img src="https://github.com/user-attachments/assets/a94a8a5e-dfeb-4771-a6ab-465d3c2f01f0" alt="ShellForge — Local Governed Agent Swarm" width="700">
+<img src="https://github.com/user-attachments/assets/a94a8a5e-dfeb-4771-a6ab-465d3c2f01f0" alt="ShellForge — Local Governed Agent Runtime" width="700">
 
 </div>
 
@@ -28,8 +28,7 @@ brew tap AgentGuardHQ/tap
 brew install shellforge
 
 shellforge setup                 # pulls Ollama + model + verifies stack
-shellforge status                # verify 9/9 integrations ✓
-shellforge qa                    # run the QA agent
+shellforge run crush "analyze this repo for test gaps"
 ```
 
 ### Install from source
@@ -37,10 +36,8 @@ shellforge qa                    # run the QA agent
 ```bash
 git clone https://github.com/AgentGuardHQ/shellforge.git
 cd shellforge
-
-bash scripts/setup.sh --all     # install full 9-layer ecosystem
 go build -o shellforge ./cmd/shellforge/
-./shellforge status
+./shellforge setup
 ```
 
 **Requirements:** macOS (Apple Silicon/Intel) or Linux · ~1.3 GB RAM (1.7B model)
@@ -49,42 +46,41 @@ go build -o shellforge ./cmd/shellforge/
 
 ## What Is ShellForge?
 
-ShellForge is a **governed AI agent runtime** — a single Go binary that orchestrates local LLM inference through [Ollama](https://ollama.com) and wraps every tool call with [AgentGuard](https://github.com/AgentGuardHQ/agentguard) policy enforcement.
+ShellForge is a **governed agent runtime** — not an agent framework, not an orchestration layer, not a prompt wrapper.
 
-**The core insight:** ShellForge's value is **governance**, not the agent loop. Three execution engines handle the work — [OpenCode](https://github.com/opencode-ai/opencode) for AI coding, [DeepAgents](https://github.com/langchain-ai/deepagents) for multi-step planning, and [Paperclip](https://github.com/paperclipai/paperclip) for multi-agent orchestration. ShellForge wraps them all with [AgentGuard](https://github.com/AgentGuardHQ/agentguard) policy enforcement on every tool call.
+It sits between any agent driver and the real world. The agent decides what it wants to do. ShellForge decides whether it's allowed.
+
+```
+Agent Driver (Crush, Claude Code, Copilot CLI)
+  → ShellForge Governance (allow / deny / correct)
+    → Your Environment (files, shell, git)
+```
+
+**The core insight:** ShellForge's value is governance, not the agent loop. [Crush](https://github.com/charmbracelet/crush) handles agent execution. [Dagu](https://github.com/dagu-org/dagu) handles workflow orchestration. ShellForge wraps them all with [AgentGuard](https://github.com/AgentGuardHQ/agentguard) policy enforcement on every tool call.
 
 ---
 
-## The 8-Layer Ecosystem
+## The Stack
 
-Nine open-source integrations. One governed runtime.
-
-| # | Layer | Project | What It Does |
-|---|-------|---------|--------------|
-| 1 | 🦙 **Infer** | [Ollama](https://ollama.com) | Local LLM inference (Metal GPU on Mac) |
-| 2 | ⚡ **Optimize** | [RTK](https://github.com/rtk-ai/rtk) | Token compression — auto-wraps shell output (70–90% reduction) |
-| 3 | 🧠 **Quantize** | [TurboQuant](https://github.com/google-research/turboquant) (Google) | KV cache optimization — run 14B models on 8 GB Macs |
-| 4 | 🛡️ **Govern** | [AgentGuard](https://github.com/AgentGuardHQ/agentguard) | Governance kernel — enforce/monitor policy on every action |
-| 5 | 💻 **Code** | [OpenCode](https://github.com/opencode-ai/opencode) | AI coding framework (Go CLI, native tools) |
-| 6 | 🤖 **Plan** | [DeepAgents](https://github.com/langchain-ai/deepagents) (LangChain) | Multi-step planning and task decomposition |
-| 6b | 📎 **Orchestrate** | [Paperclip](https://github.com/paperclipai/paperclip) | Multi-agent org charts, budgets, task coordination |
-| 7 | 🔒 **Sandbox** | [OpenShell](https://github.com/NVIDIA/OpenShell) (NVIDIA) | Kernel sandbox — Landlock + Seccomp BPF (Docker on macOS) |
-| 8 | 🐾 **Scan** | [DefenseClaw](https://github.com/cisco-ai-defense/defenseclaw) (Cisco) | Supply chain scanner — AI Bill of Materials generation |
-
-Check integration health at any time:
+| Layer | Project | What It Does |
+|-------|---------|--------------|
+| **Infer** | [Ollama](https://ollama.com) | Local LLM inference (Metal GPU on Mac) |
+| **Optimize** | [RTK](https://github.com/rtk-ai/rtk) | Token compression — 70-90% reduction on shell output |
+| **Execute** | [Crush](https://github.com/charmbracelet/crush) | Go-native AI coding agent (TUI + headless) |
+| **Orchestrate** | [Dagu](https://github.com/dagu-org/dagu) | YAML DAG workflows with scheduling and web UI |
+| **Govern** | [AgentGuard](https://github.com/AgentGuardHQ/agentguard) | Policy enforcement on every action — allow/deny/correct |
+| **Sandbox** | [OpenShell](https://github.com/NVIDIA/OpenShell) | Kernel-level isolation (Docker on macOS) |
+| **Scan** | [DefenseClaw](https://github.com/cisco-ai-defense/defenseclaw) | Supply chain scanner — AI Bill of Materials |
 
 ```bash
-./shellforge status
-# ✓ Ollama        running (qwen3:1.7b loaded)
-# ✓ RTK           v0.4.2
-# ✓ TurboQuant    configured
-# ✓ AgentGuard    enforce mode (5 rules)
-# ✓ OpenCode      v0.1.0
-# ✓ DeepAgents    connected
-# ✓ Paperclip     orchestrator ready
-# ✓ OpenShell     Docker sandbox active
-# ✓ DefenseClaw   scanner ready
-# Status: 9/9 integrations healthy
+shellforge status
+# Ollama        running (qwen3:30b loaded)
+# RTK           v0.4.2
+# Crush         v1.0.0
+# AgentGuard    enforce mode (5 rules)
+# Dagu          connected (web UI at :8080)
+# OpenShell     Docker sandbox active
+# DefenseClaw   scanner ready
 ```
 
 ---
@@ -93,79 +89,49 @@ Check integration health at any time:
 
 | Command | Description |
 |---------|-------------|
-| `./shellforge status` | Show ecosystem health (all 9 integrations) |
-| `./shellforge qa` | Run the QA agent (test gap analysis) |
-| `./shellforge report` | Run the report agent (markdown summary) |
-| `./shellforge agent` | Run a custom agent with a prompt |
-| `./shellforge scan` | Run security scan via DefenseClaw |
-| `./shellforge serve` | **Daemon mode** — run scheduled agent swarm |
-| `./shellforge setup` | Interactive setup wizard |
-| `./shellforge version` | Show version |
+| `shellforge run crush "prompt"` | Run Crush with full governance |
+| `shellforge serve agents.yaml` | Daemon mode — run scheduled agent swarm |
+| `shellforge agent "prompt"` | Run built-in agent with governance |
+| `shellforge status` | Show ecosystem health |
+| `shellforge setup` | Install Ollama, pull model, verify stack |
+| `shellforge scan` | Run security scan via DefenseClaw |
+| `shellforge version` | Print version |
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Your Prompt                                                │
-│  "Analyze this repo for test gaps"                          │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-                  ┌────────▼────────┐
-                  │  ⚡ RTK          │  Strip 70–90% of terminal
-                  │  Token Compress  │  noise before the LLM sees it
-                  └────────┬────────┘
-                           │
-                  ┌────────▼────────┐
-                  │  🧠 TurboQuant   │  6× KV cache compression
-                  │  Quantization    │  14B models on 8 GB RAM
-                  └────────┬────────┘
-                           │
-                  ┌────────▼────────┐
-                  │  🦙 Ollama       │  Local inference
-                  │  qwen3 · mistral │  any GGUF model
-                  └────────┬────────┘
-                           │
-              ┌────────────▼────────────────┐
-              │  🔥 ShellForge (Go binary)   │
-              │                              │
-              │  ┌─ OpenCode adapter ──────┐ │
-              │  │  AI coding engine        │ │  Pluggable engine
-              │  ├─ DeepAgents adapter ────┤ │  interface picks the
-              │  │  multi-step planning     │ │  best available
-              │  ├─ Paperclip adapter ─────┤ │  framework at runtime
-              │  │  multi-agent orchestration│ │
-              │  └─────────────────────────┘ │
-              │                              │
-              │  Tools: read_file │ write_file│
-              │  run_shell │ list_files       │
-              │  search_files                 │
-              └────────────┬────────────────-┘
-                           │ tool call
-           ════════════════╪════════════════
-           ║  🛡️ AgentGuard Governance     ║
-           ║  agentguard.yaml              ║
-           ║  enforce / monitor            ║
-           ║  allow · deny · audit         ║
-           ║  every. single. action.       ║
-           ════════════════╪════════════════
-                           │ approved action
-                  ┌────────┼────────┐
-                  ▼        ▼        ▼
-             ┌────────┐ ┌─────┐ ┌──────────┐
-             │ Files  │ │ Git │ │  Shell   │
-             │        │ │     │ │ (RTK)    │
-             └────────┘ └─────┘ └──────────┘
-                  🌍 Your Environment
-                  (sandboxed by OpenShell)
+┌───────────────────────────────────────────────────┐
+│  Dagu (Orchestration)                              │
+│  YAML DAGs · Cron scheduling · Web UI · Retries    │
+└────────────────────┬──────────────────────────────┘
+                     │ task
+┌────────────────────▼──────────────────────────────┐
+│  Crush (Execution Engine)                          │
+│  Agent loop · Tool calling · TUI + headless        │
+│  Uses Ollama for inference                         │
+└────────────────────┬──────────────────────────────┘
+                     │ tool call
+          ═══════════╪═══════════
+          ║  AgentGuard          ║
+          ║  Governance Kernel   ║
+          ║  allow · deny · audit║
+          ║  every. single. call.║
+          ═══════════╪═══════════
+                     │ approved
+┌────────────────────▼──────────────────────────────┐
+│  Your Environment                                  │
+│  Files · Shell (RTK) · Git · Network               │
+│  Sandboxed by OpenShell                            │
+└───────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Governance
 
-ShellForge's core value is **governance**. The AgentGuard engine (`internal/governance/engine.go`) parses `agentguard.yaml` and intercepts every tool call before execution.
+ShellForge's core value. Every tool call passes through `agentguard.yaml` before execution.
 
 ```yaml
 # agentguard.yaml — policy-as-code for every agent action
@@ -180,84 +146,12 @@ policies:
     action: deny
     pattern: "rm -rf"
 
-  - name: file-write-bounds
-    action: deny
-    description: "Agents can only write within the project directory"
-
-  - name: bounded-execution
-    action: deny
-    description: "5-minute timeout per agent run"
-
   - name: no-secret-access
     action: deny
     pattern: "*.env|*id_rsa|*id_ed25519"
 ```
 
-- **`enforce` mode** — violations are blocked and logged
-- **`monitor` mode** — violations are logged but not blocked (use while tuning policies)
-
----
-
-## Project Structure
-
-```
-shellforge/
-├── cmd/shellforge/
-│   ├── main.go                    # CLI entry (setup, qa, report, agent, scan, status, version)
-│   └── status.go                  # Ecosystem health check (all 9 integrations)
-├── internal/
-│   ├── governance/engine.go       # Parses agentguard.yaml, enforce/monitor mode
-│   ├── ollama/client.go           # Ollama HTTP client
-│   ├── agent/loop.go              # Multi-turn agentic loop with tool calls
-│   ├── tools/
-│   │   ├── tools.go               # 5 tools: read_file, write_file, run_shell, list_files, search_files
-│   │   └── rtk_shell.go           # RTK-wrapped shell execution
-│   ├── logger/logger.go           # Structured JSON logging
-│   ├── engine/
-│   │   ├── engine.go              # Pluggable engine interface
-│   │   ├── opencode.go            # OpenCode subprocess adapter
-│   │   ├── deepagents.go          # DeepAgents subprocess adapter
-│   │   └── paperclip.go           # Paperclip orchestration adapter
-│   └── integration/
-│       ├── rtk.go                 # RTK token compression
-│       ├── openshell.go           # NVIDIA OpenShell sandbox
-│       ├── defenseclaw.go         # Cisco DefenseClaw scanner
-│       ├── turboquant.go          # Google TurboQuant quantization
-│       └── agentguard.go          # AgentGuard kernel integration
-├── scripts/
-│   ├── setup.sh                   # Interactive installer (--all, --minimal)
-│   ├── run-agent.sh
-│   ├── run-qa-agent.sh
-│   └── run-report-agent.sh
-├── agentguard.yaml                # Governance policy (5 rules, enforce mode)
-├── go.mod                         # github.com/AgentGuardHQ/shellforge
-└── go.sum
-```
-
----
-
-## Build & Development
-
-```bash
-# Build
-go build -o shellforge ./cmd/shellforge/
-
-# Run directly
-go run ./cmd/shellforge/ status
-go run ./cmd/shellforge/ qa
-
-# Test
-go test ./...
-```
-
-### Model Options
-
-| Model | Params | RAM | Best For |
-|-------|--------|-----|----------|
-| `qwen3:1.7b` | 1.7B | ~1.2 GB | Fast tasks, prototyping |
-| `qwen3:4b` | 4B | ~3 GB | Balanced reasoning |
-| `qwen3:30b` | 30B | ~19 GB | Production quality (M4 Pro 48GB) |
-| `mistral:7b` | 7B | ~5 GB | Complex analysis |
+When an action is denied, ShellForge's **correction engine** feeds structured feedback back to the model so it can self-correct — not just fail.
 
 ---
 
@@ -269,7 +163,7 @@ Run a 24/7 agent swarm on your Mac with memory-aware scheduling:
 shellforge serve agents.yaml
 ```
 
-ShellForge auto-detects your RAM, calculates how many agents can run in parallel without OOM, and queues the rest. Every agent run is governed by `agentguard.yaml`.
+Auto-detects RAM, calculates max parallel Ollama slots, queues the rest.
 
 ```yaml
 # agents.yaml
@@ -284,14 +178,6 @@ agents:
     priority: 2
     timeout: 300
     enabled: true
-
-  - name: report-agent
-    system: "You are a technical writer."
-    prompt: "Generate a status report."
-    schedule: "30m"
-    priority: 1
-    timeout: 180
-    enabled: true
 ```
 
 **Memory budget (qwen3:30b Q4):**
@@ -301,50 +187,42 @@ agents:
 | M4 Pro 48GB | 48 GB | ~25 GB | 3-4 agents |
 | M4 32GB | 32 GB | ~9 GB | 1-2 agents |
 
-**Tip:** Set `OLLAMA_KV_CACHE_TYPE=q8_0` to halve KV cache memory per slot — doubles your agent capacity.
+**Tip:** `OLLAMA_KV_CACHE_TYPE=q8_0` halves KV cache memory — doubles agent capacity.
 
 ---
 
-## macOS (Apple Silicon / M4) Support
+## Model Options
 
-ShellForge runs natively on macOS with Apple Silicon (M1–M4). Notes:
+| Model | Params | RAM | Best For |
+|-------|--------|-----|----------|
+| `qwen3:1.7b` | 1.7B | ~1.2 GB | Fast tasks, prototyping |
+| `qwen3:4b` | 4B | ~3 GB | Balanced reasoning |
+| `qwen3:30b` | 30B | ~19 GB | Production quality (M4 Pro 48GB) |
+| `mistral:7b` | 7B | ~5 GB | Complex analysis |
 
-- **Ollama** uses Metal GPU acceleration automatically — no CUDA needed
-- **TurboQuant** KV cache compression makes 14B models fit in 8 GB unified memory
-- **OpenShell** requires Docker (via [Colima](https://github.com/abiosoft/colima) or Docker Desktop) since Landlock/Seccomp are Linux-only kernel features
+---
 
-```bash
-# macOS: install Colima for OpenShell sandbox support
-brew install colima docker
-colima start
-```
+## macOS (Apple Silicon / M4)
+
+- **Ollama** uses Metal GPU acceleration — no CUDA needed
+- **KV cache quantization** (`OLLAMA_KV_CACHE_TYPE=q8_0`) halves memory per agent slot
+- **OpenShell** requires Docker via [Colima](https://github.com/abiosoft/colima)
 
 ---
 
 ## The AgentGuard Platform
 
-ShellForge is part of the **AgentGuard** ecosystem:
-
 | Project | What It Does |
 |---------|--------------|
-| [**AgentGuard**](https://github.com/AgentGuardHQ/agentguard) | Governance gateway — policy enforcement for Claude Code, Codex, Copilot, Gemini, OpenCode, DeepAgents |
-| [**AgentGuard Cloud**](https://github.com/AgentGuardHQ/agentguard-cloud) | SaaS dashboard — observability, session replay, swarm org chart |
-| **ShellForge** ← you are here | Governed local agent runtime — Go binary + Ollama + 9 integrations |
+| [**AgentGuard**](https://github.com/AgentGuardHQ/agentguard) | Governance kernel — policy enforcement for any agent driver |
+| [**AgentGuard Cloud**](https://github.com/AgentGuardHQ/agentguard-cloud) | SaaS dashboard — observability, session replay, compliance |
+| **ShellForge** | Governed local agent runtime — the onramp to AgentGuard |
 
 ---
 
 ## Contributing
 
-ShellForge is open source and actively developed. We welcome:
-
-- New integration adapters (`internal/integration/`)
-- Engine adapters for additional frameworks (`internal/engine/`)
-- Governance policy templates
-- Tool implementations (`internal/tools/`)
-- Documentation improvements
-
 ```bash
-# Fork, branch, build, test, PR
 git checkout -b feat/my-feature
 go build ./cmd/shellforge/
 go test ./...
@@ -356,9 +234,9 @@ See [docs/roadmap.md](docs/roadmap.md) for what's planned.
 
 <div align="center">
 
-**[🌐 Website](https://agentguardhq.github.io/shellforge)** · **[⭐ Star on GitHub](https://github.com/AgentGuardHQ/shellforge)** · **[🛡️ AgentGuard](https://github.com/AgentGuardHQ/agentguard)**
+**[Website](https://agentguardhq.github.io/shellforge)** · **[Star on GitHub](https://github.com/AgentGuardHQ/shellforge)** · **[AgentGuard](https://github.com/AgentGuardHQ/agentguard)**
 
-*Built with 🔥 by humans and agents*
+*Built by humans and agents*
 
 MIT License
 
