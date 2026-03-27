@@ -6,3 +6,7 @@ outputs/logs/*.log
 !outputs/logs/.gitkeep
 .env
 .tmp/
+
+# Go binary
+shellforge
+*.exe

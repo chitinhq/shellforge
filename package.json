@@ -1,17 +1,23 @@
 {
   "name": "shellforge",
-  "version": "0.1.0",
-  "description": "ShellForge — local governed agent swarm powered by Ollama + AgentGuard",
+  "version": "0.2.0",
+  "description": "ShellForge — local governed agent runtime powered by Ollama + AgentGuard",
   "private": false,
   "type": "module",
   "scripts": {
     "setup": "bash scripts/setup.sh",
+    "build": "go build -o shellforge ./cmd/shellforge",
     "agent": "tsx agents/prototype-agent.ts",
     "qa": "tsx agents/qa-agent.ts",
-    "report": "tsx agents/report-agent.ts"
+    "report": "tsx agents/report-agent.ts",
+    "go:qa": "./shellforge qa",
+    "go:report": "./shellforge report",
+    "go:agent": "./shellforge agent",
+    "go:status": "./shellforge status"
   },
   "dependencies": {
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "yaml": "^2.7.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
