@@ -1,12 +1,20 @@
-node_modules/
-dist/
-outputs/reports/*.md
-outputs/logs/*.log
-!outputs/reports/.gitkeep
-!outputs/logs/.gitkeep
-.env
-.tmp/
-
 # Go binary
 shellforge
 *.exe
+
+# Build artifacts
+dist/
+
+# Agent outputs (generated at runtime)
+outputs/logs/*.log
+outputs/logs/*.md
+outputs/logs/*.jsonl
+outputs/reports/*.md
+outputs/reports/*.jsonl
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db

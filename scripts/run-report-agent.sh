@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# run-report-agent.sh — Run report agent, safe for cron
-set -uo pipefail
-
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-exec "$SCRIPT_DIR/run-agent.sh" report "$@"
+set -euo pipefail
+cd "$(dirname "$0")/.."
+exec ./shellforge report "${1:-.}"

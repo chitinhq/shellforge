@@ -1,130 +1,64 @@
 #!/usr/bin/env bash
-# setup.sh — Install dependencies and configure local swarm
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-cd "$ROOT"
-
 echo "=== ShellForge Setup ==="
-echo ""
 
-# 1. Node.js
-if ! command -v node &>/dev/null; then
-  echo "ERROR: Node.js not found. Install Node 20+ first."
-  exit 1
-fi
-NODE_VER=$(node -v | sed 's/v//' | cut -d. -f1)
-if [ "$NODE_VER" -lt 20 ]; then
-  echo "ERROR: Node $NODE_VER found, need 20+."
-  exit 1
-fi
-echo "✓ Node.js $(node -v)"
-
-# 2. Install npm deps
-if [ ! -d node_modules ]; then
-  echo "→ Installing npm dependencies..."
-  npm install --quiet
+# Check Go
+if command -v go &>/dev/null; then
+  echo "✓ Go $(go version | awk '{print $3}')"
 else
-  echo "✓ npm dependencies installed"
+  echo "✗ Go not found. Install: https://go.dev/dl/"
+  exit 1
 fi
 
-# 3. Ollama
-if ! command -v ollama &>/dev/null; then
-  echo ""
+# Build the binary
+echo "→ Building shellforge..."
+go build -o shellforge ./cmd/shellforge
+echo "✓ Binary built: ./shellforge"
+
+# Check/install Ollama
+if command -v ollama &>/dev/null; then
+  echo "✓ Ollama installed"
+else
   echo "→ Installing Ollama..."
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    if command -v brew &>/dev/null; then
-      echo "  Installing via Homebrew..."
-      brew install --cask ollama
-    else
-      echo "  Download from: https://ollama.com/download/mac"
-      echo "  Or install Homebrew first: https://brew.sh"
-      exit 1
-    fi
-  elif [[ "$OSTYPE" == "linux"* ]]; then
-    curl -fsSL https://ollama.com/install.sh | sh
+  if [[ "$(uname)" == "Darwin" ]]; then
+    brew install ollama
   else
-    echo "  Unsupported OS. Install Ollama from: https://ollama.com"
-    exit 1
+    curl -fsSL https://ollama.ai/install.sh | sh
   fi
 fi
-echo "✓ Ollama $(ollama --version 2>/dev/null || echo 'installed')"
 
-# 4. Start Ollama if not running
+# Start Ollama if not running
 if ! curl -sf http://localhost:11434/api/tags &>/dev/null; then
   echo "→ Starting Ollama..."
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS: Ollama runs as a desktop app
-    open -a Ollama 2>/dev/null || ollama serve &>/dev/null &
-    echo "  Waiting for Ollama to start..."
-    for i in {1..10}; do
-      sleep 2
-      curl -sf http://localhost:11434/api/tags &>/dev/null && break
-    done
-  else
-    ollama serve &>/dev/null &
-    sleep 3
-  fi
-  if ! curl -sf http://localhost:11434/api/tags &>/dev/null; then
-    echo "  WARNING: Ollama didn't start. Open the Ollama app or run 'ollama serve'."
-  else
-    echo "✓ Ollama running"
-  fi
-else
+  ollama serve &>/dev/null &
+  sleep 3
+fi
+
+if curl -sf http://localhost:11434/api/tags &>/dev/null; then
   echo "✓ Ollama running"
+else
+  echo "⚠ Ollama not responding — start manually: ollama serve"
 fi
 
-# 5. Pull default model
+# Pull model
 MODEL="${OLLAMA_MODEL:-qwen3:1.7b}"
-echo "→ Pulling model: $MODEL (this may take a few minutes on first run)..."
-if ollama pull "$MODEL" 2>&1; then
-  echo "✓ Model ready: $MODEL"
-else
-  echo ""
-  echo "  ⚠️  Could not pull $MODEL (network restricted?)"
-  echo ""
-  echo "  Options:"
-  echo "    1. Try a different network (hotspot, home wifi)"
-  echo "    2. Pull at home: ollama pull $MODEL"
-  echo "    3. If you already have models, list them: ollama list"
-  echo "    4. Set a different model in .env: OLLAMA_MODEL=<your-model>"
-  echo ""
-  AVAILABLE=$(ollama list 2>/dev/null | tail -n +2 | awk '{print $1}' | head -5)
-  if [ -n "$AVAILABLE" ]; then
-    echo "  Models already available:"
-    echo "$AVAILABLE" | sed 's/^/    - /'
-    FIRST=$(echo "$AVAILABLE" | head -1)
-    echo ""
-    echo "  → Using $FIRST as fallback. Update .env to change."
-    sed -i.bak "s/OLLAMA_MODEL=.*/OLLAMA_MODEL=$FIRST/" .env 2>/dev/null
-  fi
-fi
+echo "→ Pulling model ${MODEL}..."
+ollama pull "$MODEL"
+echo "✓ Model ready: ${MODEL}"
 
-# 6. Create .env if missing
-if [ ! -f .env ]; then
-  cp .env.example .env
-  echo "✓ Created .env from .env.example"
-else
-  echo "✓ .env exists"
-fi
-
-# 7. Create output dirs
-mkdir -p outputs/reports outputs/logs
-touch outputs/reports/.gitkeep outputs/logs/.gitkeep
+# Create output dirs
+mkdir -p outputs/logs outputs/reports
 echo "✓ Output directories ready"
+
+# Show ecosystem status
+echo ""
+./shellforge status
 
 echo ""
 echo "=== ShellForge Setup Complete ==="
 echo ""
-echo "Next steps:"
-echo "  1. Edit .env if you want to change the model or settings"
-echo "  2. Run an agent:"
-echo "     npm run report              # generate a status report"
-echo "     npm run qa                  # analyze code for test suggestions"
-echo "     npm run agent -- 'prompt'   # prototype code from a prompt"
-echo "  3. Or use scripts:"
-echo "     scripts/run-report-agent.sh"
-echo "     scripts/run-qa-agent.sh"
-echo "     scripts/run-agent.sh qa"
-echo ""
+echo "Quick start:"
+echo "  ./shellforge qa          # analyze code"
+echo "  ./shellforge report      # weekly report"
+echo "  ./shellforge agent \"build a health endpoint\""
