@@ -28,17 +28,3 @@ changelog:
     exclude:
       - "^docs:"
       - "^chore:"
-
-brews:
-  - repository:
-      owner: AgentGuardHQ
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    directory: Formula
-    homepage: "https://github.com/AgentGuardHQ/shellforge"
-    description: "Local governed agent runtime — wraps Ollama + AgentGuard governance"
-    license: "MIT"
-    install: |
-      bin.install "shellforge"
-    test: |
-      system "#{bin}/shellforge", "version"
