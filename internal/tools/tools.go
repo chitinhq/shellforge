@@ -11,7 +11,7 @@ import (
 "github.com/AgentGuardHQ/shellforge/internal/logger"
 )
 
-const MaxOutput = 8000
+const MaxOutput = 2000
 
 type Definition struct {
 Name        string

@@ -144,7 +144,8 @@ func ListModels() ([]string, error) {
 client := &http.Client{Timeout: 5 * time.Second}
 resp, err := client.Get(Host + "/api/tags")
 if err != nil {
-return nil, err
+// Network/connection error — return empty list so callers stay safe.
+return []string{}, nil
 }
 defer resp.Body.Close()
 
