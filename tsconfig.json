@@ -10,10 +10,24 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {
-      "@config/*": ["config/*"],
-      "@adapters/*": ["adapters/*"]
+      "@config/*": [
+        "config/*"
+      ],
+      "@adapters/*": [
+        "adapters/*"
+      ]
     }
   },
-  "include": ["agents/**/*.ts", "config/**/*.ts", "adapters/**/*.ts"],
-  "exclude": ["node_modules", "dist", "outputs"]
+  "include": [
+    "agents/**/*.ts",
+    "config/**/*.ts",
+    "adapters/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "outputs",
+    "cmd",
+    "internal"
+  ]
 }
