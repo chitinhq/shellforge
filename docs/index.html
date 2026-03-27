@@ -474,29 +474,35 @@
 <!-- ─── Stack ─── -->
 <section class="stack" id="stack">
   <div class="container">
-    <h2 class="section-title">The Governed Agent Stack</h2>
-    <p class="section-sub">Four layers. Full control.</p>
+    <h2 class="section-title">Where AgentGuard Lives</h2>
+    <p class="section-sub">Between every tool call and your environment. The gatekeeper.</p>
     <div class="stack-diagram">
       <div class="stack-layer">
-        <span class="layer-tag">LAYER 3</span>
+        <span class="layer-tag">THINK</span>
         <span class="layer-name">🤖 Agent Logic</span>
         <span class="layer-desc">TypeScript scripts · QA · Reports · Prototyping</span>
       </div>
-      <div class="stack-connector">│</div>
+      <div class="stack-connector">│ tool call</div>
       <div class="stack-layer">
-        <span class="layer-tag">LAYER 2</span>
+        <span class="layer-tag">INFER</span>
         <span class="layer-name">🦙 Local Model</span>
         <span class="layer-desc">Ollama · qwen3 · mistral · any GGUF</span>
       </div>
-      <div class="stack-connector">│</div>
-      <div class="stack-layer" style="border-color: var(--accent);">
-        <span class="layer-tag">LAYER 1</span>
-        <span class="layer-name">🛡️ AgentGuard Governance</span>
-        <span class="layer-desc">Policy enforcement · Audit · Telemetry</span>
+      <div class="stack-connector">│ action intent</div>
+      <div class="stack-layer" style="border-color: var(--green); border-width: 2px; background: rgba(81,207,102,0.05);">
+        <span class="layer-tag" style="background: rgba(81,207,102,0.15); color: var(--green);">GOVERN</span>
+        <span class="layer-name">🛡️ AgentGuard — The Gateway</span>
+        <span class="layer-desc">allow / deny / audit every action before it reaches your machine</span>
+      </div>
+      <div class="stack-connector">│ approved action only</div>
+      <div class="stack-layer" style="border-color: var(--accent); background: rgba(255,107,43,0.03);">
+        <span class="layer-tag">EXECUTE</span>
+        <span class="layer-name">🌍 Your Environment</span>
+        <span class="layer-desc">Filesystem · Shell · Git · Network · APIs</span>
       </div>
       <div class="stack-connector">│</div>
       <div class="stack-layer" style="border-style: dashed; opacity: 0.7;">
-        <span class="layer-tag">LAYER 0</span>
+        <span class="layer-tag">ISOLATE</span>
         <span class="layer-name">🔒 Kernel Sandbox</span>
         <span class="layer-desc">NVIDIA OpenShell · Landlock · Seccomp — coming soon</span>
       </div>
@@ -577,13 +583,19 @@
       <div class="stack-layer" style="border-color: var(--accent);">
         <span class="layer-tag" style="min-width: 80px;">AGENT</span>
         <span class="layer-name">🔥 ShellForge</span>
-        <span class="layer-desc">Agent execution loop — input → prompt → model → output → save</span>
+        <span class="layer-desc">Agent execution loop — input → prompt → model → decide action</span>
       </div>
-      <div class="stack-connector">↓</div>
-      <div class="stack-layer" style="border-color: var(--green);">
+      <div class="stack-connector">↓ agent wants to: write file, run shell, push git</div>
+      <div class="stack-layer" style="border-color: var(--green); border-width: 2px; background: rgba(81,207,102,0.05);">
         <span class="layer-tag" style="min-width: 80px; background: rgba(81,207,102,0.15); color: var(--green);">GOVERN</span>
-        <span class="layer-name">🛡️ AgentGuard</span>
-        <span class="layer-desc">Policy-as-code — allow/deny every tool call, full audit trail</span>
+        <span class="layer-name">🛡️ AgentGuard — <strong>The Gateway</strong></span>
+        <span class="layer-desc">Policy-as-code — allow/deny every action before it touches your environment</span>
+      </div>
+      <div class="stack-connector">↓ approved actions only</div>
+      <div class="stack-layer" style="border-color: var(--accent); background: rgba(255,107,43,0.03);">
+        <span class="layer-tag" style="min-width: 80px;">EXECUTE</span>
+        <span class="layer-name">🌍 Your Environment</span>
+        <span class="layer-desc">Filesystem · Shell · Git · Network · APIs — the real world</span>
       </div>
       <div class="stack-connector">↓</div>
       <div class="stack-layer" style="border-style: dashed; opacity: 0.8;">

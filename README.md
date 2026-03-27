@@ -12,24 +12,83 @@
 
 [🌐 Website](https://agentguardhq.github.io/shellforge) · [📖 Docs](docs/architecture.md) · [🗺️ Roadmap](docs/roadmap.md) · [🛡️ AgentGuard](https://github.com/AgentGuardHQ/agentguard)
 
+<img src="https://github.com/user-attachments/assets/a94a8a5e-dfeb-4771-a6ab-465d3c2f01f0" alt="ShellForge — Local Governed Agent Swarm" width="700">
+
 </div>
 
 ---
 
-## The Vision
+## How It Works
 
-The agentic AI security stack is forming:
+Your agent thinks locally. AgentGuard sits **between every tool call and the outside world** — filesystem, shell, git, network. Nothing happens without policy approval.
 
-| Layer | Project | Role |
-|-------|---------|------|
-| **Layer 0** | [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell) | Kernel sandbox — Landlock + Seccomp isolation |
-| **Layer 1** | [AgentGuard](https://github.com/AgentGuardHQ/agentguard) | Policy engine — allow/deny governance hooks |
-| **Layer 2** | [Cisco DefenseClaw](https://github.com/cisco-ai-defense/defenseclaw) | Supply chain — skill scanning + MCP verification |
-| **Layer 3** | **ShellForge** ← you are here | Agent runtime — local execution with full governance |
+```
+┌──────────────────────────────────────────────────────────┐
+│  Your Prompt                                             │
+│  "Analyze this repo for test gaps"                       │
+└──────────────────────┬───────────────────────────────────┘
+                       │
+              ┌────────▼────────┐
+              │  ⚡ RTK          │  Strip 70-90% of terminal noise
+              │  (token compress)│  before the LLM sees it
+              └────────┬────────┘
+                       │
+              ┌────────▼────────┐
+              │  🧠 TurboQuant   │  6x KV cache compression
+              │  (memory optim)  │  run 14B models on 8GB Macs
+              └────────┬────────┘
+                       │
+              ┌────────▼────────┐
+              │  🦙 Ollama       │  Local inference
+              │  qwen3 · mistral │  any GGUF model
+              └────────┬────────┘
+                       │
+              ┌────────▼────────┐
+              │  🔥 ShellForge   │  Agent execution loop
+              │  agents/*.ts     │  input → prompt → model → action
+              └────────┬────────┘
+                       │
+            ┌──────────▼──────────┐
+            │  Agent wants to:     │
+            │  write a file        │
+            │  run a shell command │
+            │  push to git         │
+            │  fetch a URL         │
+            └──────────┬──────────┘
+                       │
+         ══════════════╪══════════════
+         ║  🛡️ AgentGuard            ║
+         ║  Policy-as-code gateway   ║
+         ║  allow / deny / audit     ║
+         ║  every. single. action.   ║
+         ══════════════╪══════════════
+                       │
+              ┌────────▼────────┐
+              │  🌍 Environment  │  Filesystem · Shell · Git
+              │  (the real world)│  Network · APIs
+              └─────────────────┘
+```
 
-ShellForge is where the agents actually run. The other layers make sure they behave.
+**AgentGuard is the gatekeeper.** The agent decides what to do. AgentGuard decides if it's allowed. Only approved actions reach your environment.
 
-> **Coming soon:** Native integrations with OpenShell (sandbox), DefenseClaw (scanning), and AgentGuard Cloud (observability). [Star this repo](https://github.com/AgentGuardHQ/shellforge) to follow along.
+---
+
+## The Ecosystem
+
+Eight open-source projects. One governed agent runtime.
+
+| Layer | Project | What It Does |
+|-------|---------|--------------|
+| ⚡ **Optimize** | [RTK](https://github.com/rtk-ai/rtk) | Rust Token Killer — 70-90% fewer tokens to the LLM |
+| 🧠 **Compress** | TurboQuant (Google, ICLR 2026) | 3-bit KV cache — 6x memory reduction, zero accuracy loss |
+| 🦙 **Infer** | [Ollama](https://ollama.com) | Local model serving — any GGUF on your Mac |
+| 🔥 **Execute** | **ShellForge** ← you are here | Agent runtime — TypeScript scripts, zero frameworks |
+| 🛡️ **Govern** | [AgentGuard](https://github.com/AgentGuardHQ/agentguard) | Policy gateway between tool calls and your environment |
+| 🐾 **Scan** | [DefenseClaw](https://github.com/cisco-ai-defense/defenseclaw) (Cisco) | Supply chain — scan agent skills + MCP servers |
+| 🔒 **Sandbox** | [OpenShell](https://github.com/NVIDIA/OpenShell) (NVIDIA) | Kernel isolation — Landlock + Seccomp BPF |
+| 🤖 **Plan** | [DeepAgents](https://github.com/langchain-ai/deepagents) (LangChain) | Multi-step autonomous planning + tool use |
+
+> **Coming soon:** Native integrations with RTK, TurboQuant, OpenShell, DefenseClaw, and DeepAgents. [Star this repo](https://github.com/AgentGuardHQ/shellforge) to follow along.
 
 ---
 
@@ -79,26 +138,23 @@ policies:
 ## Architecture
 
 ```
-Cron / CLI
-    │
-    ▼
-┌─────────────────────────────────┐
-│  🛡️ AgentGuard Policy Layer     │  ← agentguard.yaml
-│  allow/deny · audit · telemetry │
-└───────────────┬─────────────────┘
-                │
-                ▼
 ┌─────────────────────────────────┐
 │  🤖 Agent (TypeScript)          │  ← agents/*.ts
-│  input → prompt → model → save  │
+│  input → prompt → model → action│
 └───────────────┬─────────────────┘
-                │
+                │ tool call
+    ════════════╪════════════
+    ║ 🛡️ AgentGuard          ║  ← agentguard.yaml
+    ║ allow/deny · audit      ║     the gatekeeper
+    ════════════╪════════════
+                │ approved action
         ┌───────┼───────┐
         ▼       ▼       ▼
     ┌────────┐ ┌─────┐ ┌──────────┐
-    │ Ollama │ │ Mem │ │ Adapters │
-    │ qwen3  │ │ (…) │ │ (future) │
+    │ Ollama │ │ FS  │ │ Shell/   │
+    │ qwen3  │ │ Git │ │ Network  │
     └────────┘ └─────┘ └──────────┘
+         🌍 Your Environment
 ```
 
 **Memory budget:** ~1.3 GB (1.7B model) or ~5 GB (7B model). Apple Silicon unified memory makes this efficient.
@@ -176,11 +232,14 @@ ShellForge is part of the **AgentGuard** platform:
 
 | Project | What It Does |
 |---------|--------------|
-| [**AgentGuard**](https://github.com/AgentGuardHQ/agentguard) | Governance runtime — hooks, policies, telemetry for Claude, Codex, Copilot, Gemini |
+| [**AgentGuard**](https://github.com/AgentGuardHQ/agentguard) | Governance gateway — sits between every agent tool call and your environment. Hooks for Claude Code, Codex, Copilot, Gemini, OpenCode, DeepAgents. |
 | [**AgentGuard Cloud**](https://github.com/AgentGuardHQ/agentguard-cloud) | SaaS dashboard — observability, session replay, swarm org chart |
-| **ShellForge** | Local agent execution — Ollama + governance on your machine |
-
-Combined with the emerging open-source security stack (**OpenShell** for sandboxing, **DefenseClaw** for supply chain scanning), this creates a full-stack governed agentic AI platform — from kernel isolation to cloud observability.
+| **ShellForge** | Local agent runtime — Ollama + governance on your machine |
+| [**RTK**](https://github.com/rtk-ai/rtk) | Rust Token Killer — compress terminal output 70-90% before the LLM |
+| **TurboQuant** | Google KV cache compression — 6x memory reduction for local models |
+| [**DefenseClaw**](https://github.com/cisco-ai-defense/defenseclaw) | Cisco supply chain security — scan agent skills + MCP servers |
+| [**OpenShell**](https://github.com/NVIDIA/OpenShell) | NVIDIA kernel sandbox — Landlock + Seccomp process isolation |
+| [**DeepAgents**](https://github.com/langchain-ai/deepagents) | LangChain multi-step planning — autonomous task decomposition |
 
 ---
 
