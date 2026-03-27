@@ -34,15 +34,12 @@ if ! command -v ollama &>/dev/null; then
   echo ""
   echo "→ Installing Ollama..."
   if [[ "$OSTYPE" == "darwin"* ]]; then
-    echo "  Download from: https://ollama.com/download/mac"
-    echo "  Or: brew install ollama"
-    echo ""
-    read -p "  Install via brew? [Y/n] " -n 1 -r
-    echo ""
-    if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-      brew install ollama
+    if command -v brew &>/dev/null; then
+      echo "  Installing via Homebrew..."
+      brew install --cask ollama
     else
-      echo "  Please install Ollama manually and re-run setup.sh"
+      echo "  Download from: https://ollama.com/download/mac"
+      echo "  Or install Homebrew first: https://brew.sh"
       exit 1
     fi
   elif [[ "$OSTYPE" == "linux"* ]]; then
@@ -57,10 +54,20 @@ echo "✓ Ollama $(ollama --version 2>/dev/null || echo 'installed')"
 # 4. Start Ollama if not running
 if ! curl -sf http://localhost:11434/api/tags &>/dev/null; then
   echo "→ Starting Ollama..."
-  ollama serve &>/dev/null &
-  sleep 3
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS: Ollama runs as a desktop app
+    open -a Ollama 2>/dev/null || ollama serve &>/dev/null &
+    echo "  Waiting for Ollama to start..."
+    for i in {1..10}; do
+      sleep 2
+      curl -sf http://localhost:11434/api/tags &>/dev/null && break
+    done
+  else
+    ollama serve &>/dev/null &
+    sleep 3
+  fi
   if ! curl -sf http://localhost:11434/api/tags &>/dev/null; then
-    echo "  WARNING: Ollama didn't start. Run 'ollama serve' manually."
+    echo "  WARNING: Ollama didn't start. Open the Ollama app or run 'ollama serve'."
   else
     echo "✓ Ollama running"
   fi
@@ -71,8 +78,28 @@ fi
 # 5. Pull default model
 MODEL="${OLLAMA_MODEL:-qwen3:1.7b}"
 echo "→ Pulling model: $MODEL (this may take a few minutes on first run)..."
-ollama pull "$MODEL" 2>/dev/null || echo "  WARNING: Could not pull $MODEL. Run: ollama pull $MODEL"
-echo "✓ Model ready: $MODEL"
+if ollama pull "$MODEL" 2>&1; then
+  echo "✓ Model ready: $MODEL"
+else
+  echo ""
+  echo "  ⚠️  Could not pull $MODEL (network restricted?)"
+  echo ""
+  echo "  Options:"
+  echo "    1. Try a different network (hotspot, home wifi)"
+  echo "    2. Pull at home: ollama pull $MODEL"
+  echo "    3. If you already have models, list them: ollama list"
+  echo "    4. Set a different model in .env: OLLAMA_MODEL=<your-model>"
+  echo ""
+  AVAILABLE=$(ollama list 2>/dev/null | tail -n +2 | awk '{print $1}' | head -5)
+  if [ -n "$AVAILABLE" ]; then
+    echo "  Models already available:"
+    echo "$AVAILABLE" | sed 's/^/    - /'
+    FIRST=$(echo "$AVAILABLE" | head -1)
+    echo ""
+    echo "  → Using $FIRST as fallback. Update .env to change."
+    sed -i.bak "s/OLLAMA_MODEL=.*/OLLAMA_MODEL=$FIRST/" .env 2>/dev/null
+  fi
+fi
 
 # 6. Create .env if missing
 if [ ! -f .env ]; then
