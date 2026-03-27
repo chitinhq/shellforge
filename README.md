@@ -98,6 +98,7 @@ Check integration health at any time:
 | `./shellforge report` | Run the report agent (markdown summary) |
 | `./shellforge agent` | Run a custom agent with a prompt |
 | `./shellforge scan` | Run security scan via DefenseClaw |
+| `./shellforge serve` | **Daemon mode** — run scheduled agent swarm |
 | `./shellforge setup` | Interactive setup wizard |
 | `./shellforge version` | Show version |
 
@@ -255,19 +256,52 @@ go test ./...
 |-------|--------|-----|----------|
 | `qwen3:1.7b` | 1.7B | ~1.2 GB | Fast tasks, prototyping |
 | `qwen3:4b` | 4B | ~3 GB | Balanced reasoning |
+| `qwen3:30b` | 30B | ~19 GB | Production quality (M4 Pro 48GB) |
 | `mistral:7b` | 7B | ~5 GB | Complex analysis |
 
 ---
 
-## Cron Automation
+## Swarm Mode
 
-```cron
-# crontab -e
-*/10 * * * * /path/to/shellforge/scripts/run-qa-agent.sh
-*/30 * * * * /path/to/shellforge/scripts/run-report-agent.sh
+Run a 24/7 agent swarm on your Mac with memory-aware scheduling:
+
+```bash
+shellforge serve agents.yaml
 ```
 
-All scripts are idempotent and timeout-safe.
+ShellForge auto-detects your RAM, calculates how many agents can run in parallel without OOM, and queues the rest. Every agent run is governed by `agentguard.yaml`.
+
+```yaml
+# agents.yaml
+max_parallel: 0     # 0 = auto-detect from RAM
+model_ram_gb: 19    # qwen3:30b Q4
+
+agents:
+  - name: qa-agent
+    system: "You are a QA engineer."
+    prompt: "Analyze the repo for test gaps."
+    schedule: "4h"
+    priority: 2
+    timeout: 300
+    enabled: true
+
+  - name: report-agent
+    system: "You are a technical writer."
+    prompt: "Generate a status report."
+    schedule: "30m"
+    priority: 1
+    timeout: 180
+    enabled: true
+```
+
+**Memory budget (qwen3:30b Q4):**
+
+| Mac | RAM | Free for KV | Max Parallel |
+|-----|-----|-------------|--------------|
+| M4 Pro 48GB | 48 GB | ~25 GB | 3-4 agents |
+| M4 32GB | 32 GB | ~9 GB | 1-2 agents |
+
+**Tip:** Set `OLLAMA_KV_CACHE_TYPE=q8_0` to halve KV cache memory per slot — doubles your agent capacity.
 
 ---
 
