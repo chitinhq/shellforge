@@ -69,6 +69,8 @@ Policies: cfg.Policies,
 }, nil
 }
 
+// Evaluate checks a tool call against all policies and returns an allow/deny Decision.
+// In enforce mode, deny policies block execution. In monitor mode, they log only.
 func (e *Engine) Evaluate(tool string, params map[string]string) Decision {
 for _, p := range e.Policies {
 if e.matches(p, tool, params) {
@@ -98,6 +100,7 @@ Mode:       e.Mode,
 }
 }
 
+// GetTimeout returns the first policy-level timeout in seconds, or 300 if none is set.
 func (e *Engine) GetTimeout() int {
 for _, p := range e.Policies {
 if p.Timeout > 0 {

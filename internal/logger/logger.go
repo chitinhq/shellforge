@@ -45,6 +45,8 @@ entries []Entry
 logFile *os.File
 )
 
+// Init opens a JSONL log file under outputDir named "<agent>-<timestamp>.jsonl".
+// Must be called before any log functions; call Close when done.
 func Init(outputDir, agent string) error {
 if err := os.MkdirAll(outputDir, 0o755); err != nil {
 return err
@@ -59,6 +61,7 @@ logFile = f
 return nil
 }
 
+// Close flushes and closes the current log file.
 func Close() {
 if logFile != nil {
 logFile.Close()
@@ -74,6 +77,7 @@ logFile.WriteString("\n")
 }
 }
 
+// Governance logs a governance evaluation result to stdout and the JSONL log.
 func Governance(agent, tool string, params map[string]string, allowed bool, policyName, reason string) {
 status := "allow"
 if !allowed {
@@ -99,6 +103,7 @@ Decision:  &DecisionLog{Allowed: allowed, PolicyName: policyName, Reason: reason
 })
 }
 
+// ToolResult logs the outcome of a tool execution to stdout and the JSONL log.
 func ToolResult(agent, tool string, success bool, output string) {
 icon := "✓"
 if !success {
@@ -123,6 +128,7 @@ Message:   truncate(output, 200),
 })
 }
 
+// Agent logs a free-form info message from the named agent.
 func Agent(agent, message string) {
 fmt.Printf("[%s] %s\n", agent, message)
 record(Entry{
@@ -133,6 +139,7 @@ Message:   message,
 })
 }
 
+// ModelCall logs token usage and latency for an Ollama inference call.
 func ModelCall(agent string, promptTokens, responseTokens int, durationMs int64) {
 record(Entry{
 Timestamp: time.Now().UTC().Format(time.RFC3339),
@@ -143,6 +150,7 @@ Duration:  durationMs,
 })
 }
 
+// Error logs an error message to stderr and the JSONL log.
 func Error(agent, message string) {
 fmt.Fprintf(os.Stderr, "[%s] ERROR: %s\n", agent, message)
 record(Entry{
@@ -153,6 +161,7 @@ Message:   message,
 })
 }
 
+// GetEntries returns all log entries recorded in this session (in-memory only).
 func GetEntries() []Entry { return entries }
 
 func summarize(params map[string]string) string {

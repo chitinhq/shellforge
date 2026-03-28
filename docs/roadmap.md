@@ -97,6 +97,22 @@ Foundation types exist (`internal/action/`, `internal/orchestrator/`, `internal/
 
 ---
 
+## Bug Backlog (Open Issues)
+
+Bugs identified during v0.6.x development. Fix before v1.0.
+
+| Issue | Package | Severity | Description |
+|-------|---------|----------|-------------|
+| [#69](https://github.com/AgentGuardHQ/shellforge/issues/69) | `agentguard.yaml` | High | Governance gap: plain `rm` and `rm -r` bypass `no-destructive-rm` policy |
+| [#67](https://github.com/AgentGuardHQ/shellforge/issues/67) | `scripts/govern-shell.sh` | Medium | Fragile `sed`-based JSON parsing — denial reason extraction can fail or corrupt |
+| [#65](https://github.com/AgentGuardHQ/shellforge/issues/65) | `internal/scheduler` | Medium | `os.WriteFile` error silently ignored — audit log loss |
+| [#63](https://github.com/AgentGuardHQ/shellforge/issues/63) | `internal/normalizer` | Medium | `classifyShellRisk` prefix match too broad — `catalog_tool` classified as read-only |
+| [#62](https://github.com/AgentGuardHQ/shellforge/issues/62) | `cmd/shellforge` | Medium | `cmdEvaluate` ignores JSON unmarshal error — malformed input defaults to allow |
+| [#61](https://github.com/AgentGuardHQ/shellforge/issues/61) | `internal/intent` | Low | Dead code in `flattenParams` — first assignment immediately overwritten |
+| [#60](https://github.com/AgentGuardHQ/shellforge/issues/60) | all packages | High | Zero test coverage — critical for a governance runtime |
+
+---
+
 ## Stack (as of v0.6.1)
 
 | Component | Role | Status |

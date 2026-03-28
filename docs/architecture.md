@@ -8,19 +8,19 @@ ShellForge is a single Go binary (~7.5MB) that provides governed local AI agent 
 
 ```
 ┌─────────────────────────────────────────────┐
-│  Layer 8: OpenShell (Kernel Sandbox)        │  NVIDIA Landlock/Seccomp
+│  Layer 8: OpenShell (Kernel Sandbox)        │  Docker/Colima isolation
 ├─────────────────────────────────────────────┤
 │  Layer 7: DefenseClaw (Supply Chain)        │  Cisco AI BoM Scanner
 ├─────────────────────────────────────────────┤
-│  Layer 6: DeepAgents (Multi-Agent)          │  LangChain orchestration
+│  Layer 6: Dagu (Orchestration)              │  YAML DAG workflows + web UI
 ├─────────────────────────────────────────────┤
-│  Layer 5: OpenCode (AI Coding)              │  Go CLI, native tools
+│  Layer 5: Goose / OpenCode (Execution)      │  Primary local agent driver
 ├─────────────────────────────────────────────┤
 │  Layer 4: AgentGuard (Governance Kernel)    │  Policy enforcement
 ├─────────────────────────────────────────────┤
-│  Layer 3: TurboQuant (Quantization)         │  KV cache optimization
+│  Layer 3: TurboQuant (Quantization)         │  KV cache optimization (optional)
 ├─────────────────────────────────────────────┤
-│  Layer 2: RTK (Token Compression)           │  Auto-compress I/O
+│  Layer 2: RTK (Token Compression)           │  Auto-compress I/O (optional)
 ├─────────────────────────────────────────────┤
 │  Layer 1: Ollama (Local LLM)                │  Metal GPU on Mac
 └─────────────────────────────────────────────┘
@@ -47,26 +47,27 @@ internal/
 
 ShellForge uses a pluggable engine system:
 
-1. **OpenCode** (preferred) — subprocess, `--non-interactive` mode, governance-wrapped
-2. **DeepAgents** — subprocess, Node.js/Python SDK, governance-wrapped
-3. **Native** (fallback) — built-in multi-turn loop with Ollama + tool calling
+1. **Goose (Block)** (preferred local driver) — subprocess, native Ollama support, SHELL wrapped via `govern-shell.sh`
+2. **OpenCode** (alternative) — subprocess, `--non-interactive` mode, governance-wrapped
+3. **DeepAgents** (alternative) — subprocess, Node.js/Python SDK, governance-wrapped
+4. **Native** (fallback) — built-in multi-turn loop with Ollama + tool calling
 
-The engine selection is automatic based on what's installed.
+The engine selection is automatic based on what's installed. Use `shellforge run goose` for local models, or `shellforge agent` for the native loop.
 
 ## Governance Flow
 
 ```
-User Request → Engine (OpenCode/DeepAgents/Native)
+User Request → Engine (Goose/OpenCode/DeepAgents/Native)
   → Tool Call → Governance Check (agentguard.yaml)
     → ALLOW → Execute Tool → Return Result
-    → DENY  → Log Violation → Block Execution
+    → DENY  → Log Violation → Correction Feedback → Retry
 ```
 
 ## Data Flow
 
 1. User invokes `./shellforge qa` (or agent, report, scan)
 2. CLI loads `agentguard.yaml` governance policy
-3. Detects available engine (OpenCode > DeepAgents > Native)
+3. Detects available engine (Goose > OpenCode > DeepAgents > Native)
 4. Engine sends prompt to Ollama (via RTK for token compression)
 5. LLM responds with tool calls
 6. Each tool call passes through governance check

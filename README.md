@@ -75,12 +75,12 @@ ShellForge is a **governed agent runtime** — not an agent framework, not an or
 It sits between any agent driver and the real world. The agent decides what it wants to do. ShellForge decides whether it's allowed.
 
 ```
-Agent Driver (Crush, Claude Code, Copilot CLI)
+Agent Driver (Goose, Claude Code, Copilot CLI)
   → ShellForge Governance (allow / deny / correct)
     → Your Environment (files, shell, git)
 ```
 
-**The core insight:** ShellForge's value is governance, not the agent loop. [Crush](https://github.com/charmbracelet/crush) handles agent execution. [Dagu](https://github.com/dagu-org/dagu) handles workflow orchestration. ShellForge wraps them all with [AgentGuard](https://github.com/AgentGuardHQ/agentguard) policy enforcement on every tool call.
+**The core insight:** ShellForge's value is governance, not the agent loop. [Goose](https://block.github.io/goose) handles local agent execution. [Dagu](https://github.com/dagu-org/dagu) handles workflow orchestration. ShellForge wraps them all with [AgentGuard](https://github.com/AgentGuardHQ/agentguard) policy enforcement on every tool call.
 
 ---
 
@@ -90,7 +90,7 @@ Agent Driver (Crush, Claude Code, Copilot CLI)
 |-------|---------|--------------|
 | **Infer** | [Ollama](https://ollama.com) | Local LLM inference (Metal GPU on Mac) |
 | **Optimize** | [RTK](https://github.com/rtk-ai/rtk) | Token compression — 70-90% reduction on shell output |
-| **Execute** | [Crush](https://github.com/charmbracelet/crush) | Go-native AI coding agent (TUI + headless) |
+| **Execute** | [Goose](https://block.github.io/goose) | AI coding agent with native Ollama support (headless) |
 | **Orchestrate** | [Dagu](https://github.com/dagu-org/dagu) | YAML DAG workflows with scheduling and web UI |
 | **Govern** | [AgentGuard](https://github.com/AgentGuardHQ/agentguard) | Policy enforcement on every action — allow/deny/correct |
 | **Sandbox** | [OpenShell](https://github.com/NVIDIA/OpenShell) | Kernel-level isolation (Docker on macOS) |
@@ -100,7 +100,6 @@ Agent Driver (Crush, Claude Code, Copilot CLI)
 shellforge status
 # Ollama        running (qwen3:30b loaded)
 # RTK           v0.4.2
-# Crush         v1.0.0
 # AgentGuard    enforce mode (5 rules)
 # Dagu          connected (web UI at :8080)
 # OpenShell     Docker sandbox active
@@ -113,7 +112,7 @@ shellforge status
 
 | Command | Description |
 |---------|-------------|
-| `shellforge run <driver> "prompt"` | Run a governed agent (claude, copilot, codex, gemini, crush) |
+| `shellforge run <driver> "prompt"` | Run a governed agent (goose, claude, copilot, codex, gemini) |
 | `shellforge setup` | Install Ollama, create governance config, verify stack |
 | `shellforge agent "prompt"` | Run a governed agent — every tool call checked |
 | `shellforge qa [dir]` | QA analysis — find test gaps and issues |
@@ -134,7 +133,6 @@ shellforge run claude "review this code"
 shellforge run codex "generate tests"
 shellforge run copilot "update docs"
 shellforge run gemini "security audit"
-shellforge run crush "analyze test gaps"
 ```
 
 Orchestrate multiple drivers in a single Dagu DAG:
@@ -156,8 +154,8 @@ See `dags/multi-driver-swarm.yaml` and `dags/workspace-swarm.yaml` for examples.
 └────────────────────┬──────────────────────────────┘
                      │ task
 ┌────────────────────▼──────────────────────────────┐
-│  Crush (Execution Engine)                          │
-│  Agent loop · Tool calling · TUI + headless        │
+│  Goose (Execution Engine)                          │
+│  Agent loop · Tool calling · Ollama-native         │
 │  Uses Ollama for inference                         │
 └────────────────────┬──────────────────────────────┘
                      │ tool call

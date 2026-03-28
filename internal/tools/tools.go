@@ -80,6 +80,8 @@ func ExecuteDirect(tool string, params map[string]string, timeoutSec int) Result
 }
 
 // Execute runs a tool call through governance, then executes if allowed.
+// Execute evaluates the tool call against governance policy and, if allowed, runs it.
+// This is the fully governed path; use ExecuteDirect when governance is already checked.
 func Execute(engine *governance.Engine, agent, tool string, params map[string]string) Result {
 decision := engine.Evaluate(tool, params)
 logger.Governance(agent, tool, params, decision.Allowed, decision.PolicyName, decision.Reason)
@@ -224,6 +226,7 @@ return Result{Success: true, Output: output}
 }
 
 // FormatForPrompt returns tool descriptions for the system prompt.
+// FormatForPrompt returns Markdown-formatted tool definitions for inclusion in a system prompt.
 func FormatForPrompt() string {
 var sb strings.Builder
 for _, t := range Definitions {
