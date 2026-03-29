@@ -22,10 +22,22 @@ if [ "${1:-}" = "-c" ]; then
     COMMAND="$*"
 
     # Evaluate through AgentGuard
-    RESULT=$(printf '{"tool":"run_shell","action":"%s","path":"."}' "$COMMAND" | shellforge evaluate 2>/dev/null || echo '{"allowed":true}')
-    
-    if echo "$RESULT" | grep -q '"allowed":false'; then
-        REASON=$(echo "$RESULT" | sed 's/.*"reason":"\([^"]*\)".*/\1/')
+    # Use jq --arg for safe JSON construction: handles quotes, backslashes, control chars in $COMMAND
+    if command -v jq &>/dev/null; then
+        JSON_PAYLOAD=$(jq -n --arg cmd "$COMMAND" '{"tool":"run_shell","action":$cmd,"path":"."}')
+    else
+        # Fallback: basic escaping (covers common cases; jq preferred)
+        ESCAPED=$(printf '%s' "$COMMAND" | sed 's/\\/\\\\/g; s/"/\\"/g')
+        JSON_PAYLOAD="{\"tool\":\"run_shell\",\"action\":\"$ESCAPED\",\"path\":\".\"}"
+    fi
+    RESULT=$(printf '%s' "$JSON_PAYLOAD" | shellforge evaluate 2>/dev/null || echo '{"allowed":false,"reason":"governance unavailable"}')
+
+    if printf '%s' "$RESULT" | grep -q '"allowed":false'; then
+        if command -v jq &>/dev/null; then
+            REASON=$(printf '%s' "$RESULT" | jq -r '.reason // "policy violation"')
+        else
+            REASON=$(printf '%s' "$RESULT" | sed 's/.*"reason":"\([^"]*\)".*/\1/')
+        fi
         echo "[AgentGuard] DENIED: $REASON" >&2
         exit 1
     fi

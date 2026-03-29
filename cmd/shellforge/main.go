@@ -801,7 +801,7 @@ func cmdEvaluate() {
 // Used by Crush fork to check actions before execution.
 data, err := io.ReadAll(os.Stdin)
 if err != nil {
-json.NewEncoder(os.Stdout).Encode(map[string]any{"allowed": true, "reason": "stdin read error"})
+json.NewEncoder(os.Stdout).Encode(map[string]any{"allowed": false, "reason": "stdin read error"})
 return
 }
 
@@ -810,7 +810,13 @@ Tool   string `json:"tool"`
 Action string `json:"action"`
 Path   string `json:"path"`
 }
-json.Unmarshal(data, &input)
+if err := json.Unmarshal(data, &input); err != nil {
+json.NewEncoder(os.Stdout).Encode(map[string]any{
+"allowed": false,
+"reason":  "malformed governance request: " + err.Error(),
+})
+return
+}
 
 configPath := findGovernanceConfig()
 if configPath == "" {

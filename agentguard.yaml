@@ -1,5 +1,5 @@
 # ShellForge — AgentGuard Governance Policy
-# Mode: monitor (log but don't block) — switch to enforce when ready
+# Mode: enforce (block violations)
 
 mode: enforce
 
@@ -13,12 +13,11 @@ policies:
     message: "Force push is not allowed by governance policy"
 
   - name: no-destructive-rm
-    description: Block recursive force deletion
+    description: Block all rm invocations (plain rm, -r, -rf, etc.)
     match:
       command: "rm"
-      args_contain: ["-rf", "-fr", "--recursive --force", "--force --recursive", "-r -f", "-f -r"]
     action: deny
-    message: "Destructive rm blocked by policy"
+    message: "rm is not allowed by governance policy — use targeted file operations instead"
 
   - name: file-write-constraints
     description: Agents may only write to outputs/ and agents' own workspace

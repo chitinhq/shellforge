@@ -120,7 +120,9 @@ if m.Command == "*" {
 if len(m.ArgsContain) > 0 {
 return containsAny(cmd, m.ArgsContain)
 }
-return p.Timeout > 0
+// Wildcard with no args_contain is a budget/monitoring policy only.
+// Timeout is enforced separately via GetTimeout(); don't match every command.
+return false
 }
 if !strings.Contains(cmd, m.Command) {
 return false
