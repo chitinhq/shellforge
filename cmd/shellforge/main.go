@@ -798,7 +798,7 @@ sched.Wait()
 
 func cmdEvaluate() {
 // Read JSON from stdin, evaluate against governance, output JSON result.
-// Used by Crush fork to check actions before execution.
+// Used by govern-shell.sh (Goose) to check actions before execution.
 data, err := io.ReadAll(os.Stdin)
 if err != nil {
 json.NewEncoder(os.Stdout).Encode(map[string]any{"allowed": true, "reason": "stdin read error"})
@@ -824,7 +824,7 @@ json.NewEncoder(os.Stdout).Encode(map[string]any{"allowed": true, "reason": "pol
 return
 }
 
-// Map Crush tool names to ShellForge tool names
+// Map tool names to ShellForge tool names
 tool := input.Tool
 params := map[string]string{"command": input.Action, "path": input.Path}
 
