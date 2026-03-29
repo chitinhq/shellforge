@@ -1,13 +1,13 @@
 {
   "squad": "shellforge",
-  "updated_at": "2026-03-29T18:00:00Z",
+  "updated_at": "2026-03-29T19:30:00Z",
   "sprint": {
     "goal": "Harden enforcement runtime — fix all P0/P1 governance bugs before dogfood run",
     "focus": "Security correctness: govern-shell.sh JSON safety, cmdEvaluate bypass, bounded-execution policy, test coverage baseline"
   },
   "pr_budget": {
     "max_open": 3,
-    "current_open": 1,
+    "current_open": 2,
     "status": "green"
   },
   "loop_guard": {
@@ -25,7 +25,7 @@
       { "number": 67, "title": "bug: govern-shell.sh uses fragile sed to parse JSON", "assignee": "em", "status": "fix-in-pr-83" },
       { "number": 63, "title": "bug: classifyShellRisk prefix matching too broad — false read-only classification", "assignee": "qa-agent" },
       { "number": 68, "title": "test: zero test coverage across all packages", "assignee": "qa-agent" },
-      { "number": 74, "title": "bug: stale crush references in cmd/shellforge/main.go", "assignee": null }
+      { "number": 74, "title": "bug: stale crush references in cmd/shellforge/main.go", "assignee": "em", "status": "fix-in-pr-84" }
     ],
     "p2": [
       { "number": 65, "title": "bug: scheduler.go silently ignores os.WriteFile error", "assignee": null },
@@ -47,7 +47,22 @@
     ]
   },
   "pr_queue": [
-    { "number": 83, "title": "fix(p0): close governance fail-open vulnerabilities", "status": "open", "ci": "pending", "issues_closed": [58, 59, 62, 67, 69, 75] }
+    {
+      "number": 83,
+      "title": "fix(p0): close governance fail-open vulnerabilities",
+      "status": "open",
+      "ci": "passing (5/5)",
+      "review_status": "REVIEW_REQUIRED — awaiting human approval (cannot self-approve)",
+      "issues_closed": [58, 59, 62, 67, 69, 75]
+    },
+    {
+      "number": 84,
+      "title": "fix(docs): update stale Crush comments in cmdEvaluate (#74)",
+      "status": "open",
+      "ci": "pending",
+      "review_status": "pending",
+      "issues_closed": [74]
+    }
   ],
   "agents": {
     "qa-agent": { "status": "assigned", "schedule": "4h", "last_issue": 63 },
@@ -56,7 +71,10 @@
     "slack-notifier": { "status": "disabled", "schedule": "8h", "last_issue": null }
   },
   "capability_gaps": [
-    "No dev-agent in swarm — P0 bugs required EM to author fixes directly this run"
+    "No dev-agent in swarm — P0/P1 bugs require EM to author fixes directly"
   ],
-  "notes": "Run 3 (2026-03-29T18:00Z): EM stepped in as dev-agent to fix all 3 P0s + 2 P1s (#58, #59, #62, #67, #69, #75). PR #83 open. PR budget 1/3. P0 blockers pending CI + merge. Next priority after merge: test coverage (#68) and classifyShellRisk false classification (#63). Dogfood run (#76) unblocked once PR #83 merges."
+  "blockers": [
+    "PR #83 (P0 fixes): CI passing, review BLOCKED — GitHub prevents self-approval. Requires human review from @jpleva91 or a collaborator."
+  ],
+  "notes": "Run 4 (2026-03-29T19:30Z): PR #83 CI passes (5/5) but blocked on REVIEW_REQUIRED — cannot self-approve. Flagged as blocker. EM authored and opened PR #84 to close P1 #74 (stale Crush comments). PR budget 2/3. P2 issues (#65, #66, #52, #53) labeled, unassigned — next dev-agent task batch. Dogfood run (#76) still blocked pending PR #83 merge. QA-agent active on #63 and #68."
 }
