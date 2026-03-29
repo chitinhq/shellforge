@@ -256,13 +256,25 @@ agents:
 
 ---
 
-## The AgentGuard Platform
+## The Governed Swarm Platform
 
-| Project | What It Does |
-|---------|--------------|
-| [**AgentGuard**](https://github.com/AgentGuardHQ/agentguard) | Governance kernel — policy enforcement for any agent driver |
-| [**AgentGuard Cloud**](https://github.com/AgentGuardHQ/agentguard-cloud) | SaaS dashboard — observability, session replay, compliance |
-| **ShellForge** | Governed local agent runtime — the onramp to AgentGuard |
+| Project | Role | What It Does |
+|---------|------|--------------|
+| **ShellForge** | Orchestration | Governed agent runtime — CLI drivers + OpenClaw + local models |
+| [**Octi Pulpo**](https://github.com/AgentGuardHQ/octi-pulpo) | Coordination | Swarm brain — shared memory, model routing, budget-aware dispatch |
+| [**AgentGuard**](https://github.com/AgentGuardHQ/agentguard) | Governance | Policy enforcement, telemetry, invariants — on every tool call |
+| [**AgentGuard Cloud**](https://github.com/AgentGuardHQ/agentguard-cloud) | Observability | SaaS dashboard — session replay, compliance, analytics |
+
+ShellForge orchestrates. Octi Pulpo coordinates. AgentGuard governs.
+
+### Supported Runtimes
+
+| Runtime | What It Adds | Best For |
+|---------|-------------|----------|
+| **CLI Drivers** | Claude Code, Codex, Copilot, Gemini, Goose | Coding, PRs, commits |
+| **[OpenClaw](https://github.com/openclaw/openclaw)** | Browser automation, 100+ skills, web app access | Integrations, NotebookLM, ChatGPT |
+| **[NemoClaw](https://github.com/NVIDIA/NemoClaw)** | OpenClaw + NVIDIA OpenShell sandbox + Nemotron | Enterprise, air-gapped, zero-cost local inference |
+| **[Ollama](https://ollama.com)** | Local model inference (Metal GPU) | Privacy, zero API cost |
 
 ---
 
