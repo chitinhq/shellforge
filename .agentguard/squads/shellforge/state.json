@@ -1,0 +1,59 @@
+{
+  "squad": "shellforge",
+  "updated_at": "2026-03-29T10:00:00Z",
+  "sprint": {
+    "goal": "Harden enforcement runtime — fix all P0/P1 governance bugs before dogfood run",
+    "focus": "Security correctness: govern-shell.sh JSON safety, cmdEvaluate bypass, bounded-execution policy, test coverage baseline"
+  },
+  "pr_budget": {
+    "max_open": 3,
+    "current_open": 0,
+    "status": "green"
+  },
+  "loop_guard": {
+    "retry_loop_detected": false,
+    "blast_radius": "low"
+  },
+  "issue_queue": {
+    "p0": [
+      { "number": 58, "title": "Critical: bounded-execution policy denies ALL run_shell calls in enforce mode", "assignee": "qa-agent" },
+      { "number": 62, "title": "bug: cmdEvaluate silently ignores JSON unmarshal error — governance bypass", "assignee": "security-scanner" },
+      { "number": 75, "title": "bug: govern-shell.sh unescaped $COMMAND in printf — silently defaults to allow", "assignee": "security-scanner" }
+    ],
+    "p1": [
+      { "number": 69, "title": "bug: governance policy gap — plain rm and rm -r not blocked by no-destructive-rm", "assignee": "security-scanner" },
+      { "number": 63, "title": "bug: classifyShellRisk prefix matching too broad — false read-only classification", "assignee": "qa-agent" },
+      { "number": 67, "title": "bug: govern-shell.sh uses fragile sed to parse JSON", "assignee": "security-scanner" },
+      { "number": 68, "title": "test: zero test coverage across all packages", "assignee": "qa-agent" },
+      { "number": 74, "title": "bug: stale crush references in cmd/shellforge/main.go", "assignee": null }
+    ],
+    "p2": [
+      { "number": 65, "title": "bug: scheduler.go silently ignores os.WriteFile error", "assignee": null },
+      { "number": 66, "title": "bug: dead code in flattenParams() overwrites result before using it", "assignee": null },
+      { "number": 52, "title": "bug: filepath.Glob with ** in cmdScan never matches any Go files", "assignee": null },
+      { "number": 59, "title": "agentguard.yaml misleading comment says monitor but mode is enforce", "assignee": null },
+      { "number": 53, "title": "docs/readme: README still shows ./shellforge commands", "assignee": null },
+      { "number": 76, "title": "Dogfood: run ShellForge swarm on jared box via RunPod GPU", "assignee": null }
+    ],
+    "p3": [
+      { "number": 77, "title": "[research] Evaluate go-agent-framework sandboxing integration", "assignee": null },
+      { "number": 71, "title": "[research] lean-ctx — 88% token reduction via shell hook + MCP server", "assignee": null },
+      { "number": 73, "title": "[research] ml-explore/mlx-lm — Apple MLX inference backend", "assignee": null },
+      { "number": 72, "title": "[research] nono — kernel-enforced agent sandbox via macOS Seatbelt", "assignee": null },
+      { "number": 56, "title": "[research] mem0 — persistent cross-run agent memory", "assignee": null },
+      { "number": 55, "title": "[research] microsoft/agent-governance-toolkit", "assignee": null },
+      { "number": 54, "title": "[research] omlx — SSD KV caching doubles swarm capacity", "assignee": null }
+    ]
+  },
+  "pr_queue": [],
+  "agents": {
+    "qa-agent": { "status": "assigned", "schedule": "4h", "last_issue": 58 },
+    "report-agent": { "status": "idle", "schedule": "30m", "last_issue": null },
+    "security-scanner": { "status": "assigned", "schedule": "12h", "last_issue": 62 },
+    "slack-notifier": { "status": "disabled", "schedule": "8h", "last_issue": null }
+  },
+  "capability_gaps": [
+    "No dev-agent in swarm — P0 bugs require human or feature-dev dispatch to write fixes and open PRs"
+  ],
+  "notes": "Run 2 (2026-03-29T10:00Z): Triaged new issue #77 as P3. Assigned security-scanner to P0 security bugs (#62, #75) and P1 rm gap (#69) + sed fragility (#67). Assigned qa-agent to P0 policy logic bug (#58) and P1 risk classifier (#63) + test coverage (#68). PR budget still 0/3 — dev-agent needed to convert analysis to PRs."
+}
