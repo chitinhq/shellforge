@@ -68,6 +68,8 @@ func cmdStatusFull() {
 		{"copilot", "github-copilot-cli", "GitHub Copilot CLI", "gh extension install github/gh-copilot"},
 		{"codex", "codex", "OpenAI Codex CLI", "npm i -g @openai/codex"},
 		{"gemini", "gemini", "Google Gemini CLI", "npm i -g @anthropic-ai/gemini-cli"},
+		{"openclaw", "openclaw", "OpenClaw browser automation (Anthropic)", "npm i -g @anthropic-ai/openclaw"},
+		{"nemoclaw", "openclaw", "NemoClaw (OpenClaw + Nemotron sandbox)", "npm i -g @anthropic-ai/openclaw"},
 	}
 	driverCount := 0
 	for _, d := range drivers {

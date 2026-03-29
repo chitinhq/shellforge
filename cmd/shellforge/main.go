@@ -47,7 +47,7 @@ cmdReport(repo)
 case "run":
 if len(os.Args) < 3 {
 fmt.Fprintln(os.Stderr, "Usage: shellforge run <driver> \"prompt\"")
-fmt.Fprintln(os.Stderr, "Drivers: goose, claude, copilot, codex, gemini")
+fmt.Fprintln(os.Stderr, "Drivers: goose, claude, copilot, codex, gemini, openclaw, nemoclaw")
 os.Exit(1)
 }
 driver := os.Args[2]
@@ -91,7 +91,7 @@ func printUsage() {
 fmt.Printf(`ShellForge %s — local governed agent runtime
 
 Usage:
-  shellforge run <driver> "prompt"  Run a governed agent (claude, copilot, codex, gemini, crush)
+  shellforge run <driver> "prompt"  Run a governed agent (claude, copilot, codex, gemini, openclaw, nemoclaw)
   shellforge setup                  Install Ollama, pull model, verify stack
   shellforge qa [target]            QA analysis with tool use + governance
   shellforge report [repo]          Weekly status report from git + logs
@@ -510,13 +510,31 @@ var drivers = map[string]driverConfig{
 		hasHooks:    false,
 		initHint:    "",
 	},
+	"openclaw": {
+		binary: "openclaw",
+		buildCmd: func(p string) []string {
+			return []string{"--non-interactive", "-p", p}
+		},
+		interactive: []string{},
+		hasHooks:    false,
+		initHint:    "agentguard openclaw-init",
+	},
+	"nemoclaw": {
+		binary: "openclaw",
+		buildCmd: func(p string) []string {
+			return []string{"--non-interactive", "--model", "nemotron", "--sandbox", "openshell", "-p", p}
+		},
+		interactive: []string{},
+		hasHooks:    false,
+		initHint:    "agentguard nemoclaw-init",
+	},
 }
 
 func cmdRun(driver, prompt string) {
 	dc, ok := drivers[driver]
 	if !ok {
 		fmt.Fprintf(os.Stderr, "Unknown driver: %s\n", driver)
-		fmt.Fprintln(os.Stderr, "Available drivers: claude, copilot, codex, gemini, crush")
+		fmt.Fprintln(os.Stderr, "Available drivers: claude, copilot, codex, gemini, openclaw, nemoclaw")
 		os.Exit(1)
 	}
 
@@ -559,8 +577,8 @@ func cmdRun(driver, prompt string) {
 	cmd.Stderr = os.Stderr
 	cmd.Env = os.Environ()
 
-	// For Goose: set governed shell so ALL commands go through AgentGuard
-	if driver == "goose" {
+	// For Goose/OpenClaw/NemoClaw: set governed shell so ALL commands go through AgentGuard
+	if driver == "goose" || driver == "openclaw" || driver == "nemoclaw" {
 		sfBin, _ := exec.LookPath("shellforge")
 		if sfBin != "" {
 			// Find govern-shell.sh next to the shellforge binary or in known locations
