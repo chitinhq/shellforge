@@ -20,9 +20,6 @@ return runShellRaw(command, timeoutSec)
 }
 
 timeout := time.Duration(timeoutSec) * time.Second
-if timeout > 60*time.Second {
-timeout = 60 * time.Second
-}
 
 // RTK wraps the command: rtk sh -c "command"
 cmd := exec.Command("rtk", "sh", "-c", command)
@@ -58,9 +55,6 @@ return Result{Success: false, Output: "Command timed out", Error: "timeout"}
 
 func runShellRaw(command string, timeoutSec int) Result {
 timeout := time.Duration(timeoutSec) * time.Second
-if timeout > 60*time.Second {
-timeout = 60 * time.Second
-}
 cmd := exec.Command("sh", "-c", command)
 
 done := make(chan error, 1)
