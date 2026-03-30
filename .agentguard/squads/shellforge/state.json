@@ -1,9 +1,10 @@
 {
   "squad": "shellforge",
-  "updated_at": "2026-03-30T00:45:00Z",
+  "updated_at": "2026-03-30T08:42:00Z",
   "sprint": {
     "goal": "Harden enforcement runtime — fix all P0/P1 governance bugs before dogfood run",
-    "focus": "Security correctness: P0 COMPLETE, P1 #28 in PR #86, test coverage (#68) and classifyShellRisk (#63) assigned to qa-agent"
+    "focus": "P0/P1 COMPLETE: all governance bugs closed or in green PR. PR #89 (test coverage + dead code) CI green, awaiting human merge.",
+    "status": "goal_achieved_pending_pr_merge"
   },
   "pr_budget": {
     "max_open": 3,
@@ -17,16 +18,16 @@
   "issue_queue": {
     "p0": [],
     "p1": [
-      { "number": 28, "title": "bug: bounded-execution policy timeout (300s) is silently overridden to 60s in shell execution", "assignee": "em", "status": "fix-in-pr-86" },
-      { "number": 63, "title": "bug: classifyShellRisk prefix matching too broad — false read-only classification", "assignee": "qa-agent" },
-      { "number": 68, "title": "test: zero test coverage across all packages", "assignee": "qa-agent" }
+      { "number": 28, "title": "bug: bounded-execution policy timeout (300s) is silently overridden to 60s in shell execution", "assignee": "em", "status": "CLOSED — merged PR #86" },
+      { "number": 63, "title": "bug: classifyShellRisk prefix matching too broad — false read-only classification", "assignee": "qa-agent", "status": "CLOSED — merged PR #88" },
+      { "number": 68, "title": "test: zero test coverage across all packages", "assignee": "qa-agent", "status": "PR #89 open, CI green (5/5)" }
     ],
     "p2": [
+      { "number": 66, "title": "bug: dead code in flattenParams() overwrites result before using it", "assignee": "qa-agent", "status": "covered in PR #89" },
       { "number": 65, "title": "bug: scheduler.go silently ignores os.WriteFile error", "assignee": null },
-      { "number": 66, "title": "bug: dead code in flattenParams() overwrites result before using it", "assignee": null },
+      { "number": 76, "title": "Dogfood: run ShellForge swarm on jared box via RunPod GPU", "assignee": null, "notes": "Blocked on setup.sh: isServer=true skips Goose, remote Ollama (OLLAMA_HOST) not supported" },
       { "number": 52, "title": "bug: filepath.Glob with ** in cmdScan never matches any Go files", "assignee": null },
       { "number": 53, "title": "docs/readme: README still shows ./shellforge commands", "assignee": null },
-      { "number": 76, "title": "Dogfood: run ShellForge swarm on jared box via RunPod GPU", "assignee": null },
       { "number": 51, "title": "bug: run() helper in main.go silently ignores command errors", "assignee": null },
       { "number": 50, "title": "bug: kernel version comparison in setup.sh is lexicographic, not numeric", "assignee": null },
       { "number": 49, "title": "bug: InferenceQueue is not priority-aware despite being documented as such", "assignee": null },
@@ -49,31 +50,42 @@
   },
   "pr_queue": [
     {
-      "number": 86,
-      "title": "fix(governance): honour policy timeout in shell execution — remove 60s cap (#28)",
+      "number": 89,
+      "title": "test: initial coverage — normalizer, governance, intent (closes #68, #66)",
       "status": "open",
-      "ci": "pending",
+      "ci": "green (5/5)",
       "review_status": "REVIEW_REQUIRED — awaiting human approval",
-      "issues_closed": [28]
+      "issues_closed": [68, 66]
     }
   ],
   "recently_closed": [
+    { "number": 88, "merged": true, "issues_closed": [63], "date": "2026-03-30", "notes": "P1 classifyShellRisk word-boundary fix" },
+    { "number": 87, "merged": true, "issues_closed": [], "date": "2026-03-30", "notes": "EM state run 6" },
+    { "number": 86, "merged": true, "issues_closed": [28], "date": "2026-03-30", "notes": "P1 timeout override fix" },
     { "number": 83, "merged": true, "issues_closed": [58, 62, 67, 69, 75], "date": "2026-03-30" },
-    { "number": 84, "merged": true, "issues_closed": [74], "date": "2026-03-30" },
-    { "number": 85, "merged": true, "issues_closed": [], "date": "2026-03-30" }
+    { "number": 84, "merged": true, "issues_closed": [74], "date": "2026-03-30" }
   ],
   "agents": {
-    "qa-agent": { "status": "assigned", "schedule": "4h", "last_issue": 63 },
+    "qa-agent": { "status": "pr_open", "schedule": "4h", "last_pr": 89, "notes": "Opened PR #89 (25 tests + dead code fix) — solid output" },
     "report-agent": { "status": "idle", "schedule": "30m", "last_issue": null },
     "security-scanner": { "status": "idle", "schedule": "12h", "last_issue": 75 },
     "slack-notifier": { "status": "disabled", "schedule": "8h", "last_issue": null }
   },
   "capability_gaps": [
-    "No dev-agent in swarm — P0/P1 bugs require EM to author fixes directly"
+    "No dev-agent in swarm — P0/P1 bugs required EM to author fixes directly",
+    "setup.sh needs remote Ollama support (OLLAMA_HOST) before dogfood can proceed on headless/GPU-remote boxes"
   ],
   "blockers": [
-    "PR #86 (P1 timeout fix): CI pending, review BLOCKED — GitHub prevents self-approval. Requires human review from @jpleva91.",
-    "Dogfood (#76): unblocked by P0 merge but no assignee yet — needs human trigger."
+    "PR #89 (test coverage + dead code fix): CI green — REVIEW REQUIRED. GitHub branch protection prevents self-approval. @jpleva91 must approve to close last P1 (#68) and P2 #66.",
+    "Dogfood (#76): governance unblocked, but setup.sh isServer check skips Goose on headless servers — needs code fix before jared-box dogfood run."
   ],
-  "notes": "Run 6 (2026-03-30T00:45Z): PRs #83/#84/#85 all merged — P0 COMPLETE. Issue #59 closed (was already fixed by #83). PR #86 opened for last P1 (#28, timeout override). PR budget 1/3. Sprint goal nearly achieved — remaining P1s are #28 (in PR), #63/#68 (qa-agent). Dogfood run (#76) is unblocked from governance side but needs human to trigger."
+  "next_sprint_proposal": {
+    "goal": "Dogfood readiness — unblock jared-box run and batch P2 bug fixes",
+    "focus": [
+      "Fix setup.sh: support remote Ollama (OLLAMA_HOST) on headless/server deployments (#76)",
+      "P2 batch: #65 (silent WriteFile), #52 (Glob ** broken), #51 (silent run() errors), #50 (version compare)",
+      "README cleanup (#53)"
+    ]
+  },
+  "notes": "Run 7 (2026-03-30T08:42Z): Sprint goal ACHIEVED. PR #86 merged (#28 closed), PR #88 merged (#63 closed), PR #89 opened by qa-agent with 25 tests — green CI. Only remaining action: human review of PR #89 to close last P1 (#68). Dogfood remains blocked on setup.sh remote Ollama gap. Next sprint: pivot to dogfood readiness."
 }
