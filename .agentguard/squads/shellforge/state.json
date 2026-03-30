@@ -1,76 +1,66 @@
 {
   "squad": "shellforge",
-  "updated_at": "2026-03-29T20:00:00Z",
+  "updated_at": "2026-03-30T00:45:00Z",
   "sprint": {
     "goal": "Harden enforcement runtime — fix all P0/P1 governance bugs before dogfood run",
-    "focus": "Security correctness: govern-shell.sh JSON safety, cmdEvaluate bypass, bounded-execution policy, test coverage baseline"
+    "focus": "Security correctness: P0 COMPLETE, P1 #28 in PR #86, test coverage (#68) and classifyShellRisk (#63) assigned to qa-agent"
   },
   "pr_budget": {
     "max_open": 3,
-    "current_open": 3,
-    "status": "at-limit"
+    "current_open": 1,
+    "status": "ok"
   },
   "loop_guard": {
     "retry_loop_detected": false,
     "blast_radius": "low"
   },
   "issue_queue": {
-    "p0": [
-      { "number": 58, "title": "Critical: bounded-execution policy denies ALL run_shell calls in enforce mode", "assignee": "em", "status": "fix-in-pr-83" },
-      { "number": 62, "title": "bug: cmdEvaluate silently ignores JSON unmarshal error — governance bypass", "assignee": "em", "status": "fix-in-pr-83" },
-      { "number": 75, "title": "bug: govern-shell.sh unescaped $COMMAND in printf — silently defaults to allow", "assignee": "em", "status": "fix-in-pr-83" }
-    ],
+    "p0": [],
     "p1": [
-      { "number": 69, "title": "bug: governance policy gap — plain rm and rm -r not blocked by no-destructive-rm", "assignee": "em", "status": "fix-in-pr-83" },
-      { "number": 67, "title": "bug: govern-shell.sh uses fragile sed to parse JSON", "assignee": "em", "status": "fix-in-pr-83" },
+      { "number": 28, "title": "bug: bounded-execution policy timeout (300s) is silently overridden to 60s in shell execution", "assignee": "em", "status": "fix-in-pr-86" },
       { "number": 63, "title": "bug: classifyShellRisk prefix matching too broad — false read-only classification", "assignee": "qa-agent" },
-      { "number": 68, "title": "test: zero test coverage across all packages", "assignee": "qa-agent" },
-      { "number": 74, "title": "bug: stale crush references in cmd/shellforge/main.go", "assignee": "em", "status": "fix-in-pr-84" }
+      { "number": 68, "title": "test: zero test coverage across all packages", "assignee": "qa-agent" }
     ],
     "p2": [
       { "number": 65, "title": "bug: scheduler.go silently ignores os.WriteFile error", "assignee": null },
       { "number": 66, "title": "bug: dead code in flattenParams() overwrites result before using it", "assignee": null },
       { "number": 52, "title": "bug: filepath.Glob with ** in cmdScan never matches any Go files", "assignee": null },
-      { "number": 59, "title": "agentguard.yaml misleading comment says monitor but mode is enforce", "assignee": "em", "status": "fix-in-pr-83" },
       { "number": 53, "title": "docs/readme: README still shows ./shellforge commands", "assignee": null },
-      { "number": 76, "title": "Dogfood: run ShellForge swarm on jared box via RunPod GPU", "assignee": null }
+      { "number": 76, "title": "Dogfood: run ShellForge swarm on jared box via RunPod GPU", "assignee": null },
+      { "number": 51, "title": "bug: run() helper in main.go silently ignores command errors", "assignee": null },
+      { "number": 50, "title": "bug: kernel version comparison in setup.sh is lexicographic, not numeric", "assignee": null },
+      { "number": 49, "title": "bug: InferenceQueue is not priority-aware despite being documented as such", "assignee": null },
+      { "number": 26, "title": "bug: run-qa-agent.sh and run-report-agent.sh don't build binary if missing", "assignee": null },
+      { "number": 25, "title": "bug: agent RunResult.Success heuristic is incorrect", "assignee": null },
+      { "number": 24, "title": "bug: listFiles() returns paths relative to cwd, not the listed directory", "assignee": null }
     ],
     "p3": [
+      { "number": 81, "title": "feat: OpenClaw as governed execution runtime in ShellForge", "assignee": null },
       { "number": 77, "title": "[research] Evaluate go-agent-framework sandboxing integration", "assignee": null },
-      { "number": 71, "title": "[research] lean-ctx — 88% token reduction via shell hook + MCP server", "assignee": null },
       { "number": 73, "title": "[research] ml-explore/mlx-lm — Apple MLX inference backend", "assignee": null },
       { "number": 72, "title": "[research] nono — kernel-enforced agent sandbox via macOS Seatbelt", "assignee": null },
+      { "number": 71, "title": "[research] lean-ctx — 88% token reduction via shell hook + MCP server", "assignee": null },
       { "number": 56, "title": "[research] mem0 — persistent cross-run agent memory", "assignee": null },
       { "number": 55, "title": "[research] microsoft/agent-governance-toolkit", "assignee": null },
       { "number": 54, "title": "[research] omlx — SSD KV caching doubles swarm capacity", "assignee": null },
-      { "number": 81, "title": "feat: OpenClaw as governed execution runtime in ShellForge", "assignee": null }
+      { "number": 11, "title": "[research] RTK integration — 70-90% token savings for agent runs", "assignee": null },
+      { "number": 10, "title": "[research] TurboQuant integration — 6x KV cache compression", "assignee": null }
     ]
   },
   "pr_queue": [
     {
-      "number": 83,
-      "title": "fix(p0): close governance fail-open vulnerabilities",
+      "number": 86,
+      "title": "fix(governance): honour policy timeout in shell execution — remove 60s cap (#28)",
       "status": "open",
-      "ci": "passing (5/5)",
-      "review_status": "REVIEW_REQUIRED — awaiting human approval (cannot self-approve)",
-      "issues_closed": [58, 59, 62, 67, 69, 75]
-    },
-    {
-      "number": 84,
-      "title": "fix(docs): update stale Crush comments in cmdEvaluate (#74)",
-      "status": "open",
-      "ci": "passing (5/5)",
-      "review_status": "REVIEW_REQUIRED — awaiting human approval (cannot self-approve)",
-      "issues_closed": [74]
-    },
-    {
-      "number": 85,
-      "title": "chore(squad): EM state update — run 4 (2026-03-29)",
-      "status": "open",
-      "ci": "passing (5/5)",
-      "review_status": "REVIEW_REQUIRED — awaiting human approval (cannot self-approve)",
-      "issues_closed": []
+      "ci": "pending",
+      "review_status": "REVIEW_REQUIRED — awaiting human approval",
+      "issues_closed": [28]
     }
+  ],
+  "recently_closed": [
+    { "number": 83, "merged": true, "issues_closed": [58, 62, 67, 69, 75], "date": "2026-03-30" },
+    { "number": 84, "merged": true, "issues_closed": [74], "date": "2026-03-30" },
+    { "number": 85, "merged": true, "issues_closed": [], "date": "2026-03-30" }
   ],
   "agents": {
     "qa-agent": { "status": "assigned", "schedule": "4h", "last_issue": 63 },
@@ -82,10 +72,8 @@
     "No dev-agent in swarm — P0/P1 bugs require EM to author fixes directly"
   ],
   "blockers": [
-    "PR #83 (P0 fixes): CI passing 5/5, review BLOCKED — GitHub prevents self-approval. Requires human review from @jpleva91 or a collaborator.",
-    "PR #84 (P1 docs fix): CI passing 5/5, review BLOCKED — same constraint.",
-    "PR #85 (EM state update): CI passing 5/5, review BLOCKED — same constraint.",
-    "PR budget AT LIMIT (3/3) — cannot open new fix PRs until at least one merges."
+    "PR #86 (P1 timeout fix): CI pending, review BLOCKED — GitHub prevents self-approval. Requires human review from @jpleva91.",
+    "Dogfood (#76): unblocked by P0 merge but no assignee yet — needs human trigger."
   ],
-  "notes": "Run 5 (2026-03-29T20:00Z): No new issues since Run 4. All 3 open PRs now passing CI (5/5) but all blocked on REVIEW_REQUIRED — GitHub branch protection prevents self-approval. PR budget at limit (3/3). No new work can be opened. Dogfood run (#76) still blocked pending PR #83 merge. Human review of PRs #83, #84, #85 is the sole critical path item."
+  "notes": "Run 6 (2026-03-30T00:45Z): PRs #83/#84/#85 all merged — P0 COMPLETE. Issue #59 closed (was already fixed by #83). PR #86 opened for last P1 (#28, timeout override). PR budget 1/3. Sprint goal nearly achieved — remaining P1s are #28 (in PR), #63/#68 (qa-agent). Dogfood run (#76) is unblocked from governance side but needs human to trigger."
 }

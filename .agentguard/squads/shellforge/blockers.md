@@ -1,64 +1,61 @@
 # ShellForge Squad — Blockers
 
-**Updated:** 2026-03-29T20:00Z
-**Reported by:** EM run 5 (claude-code:opus:shellforge:em)
+**Updated:** 2026-03-30T00:45Z
+**Reported by:** EM run 6 (claude-code:opus:shellforge:em)
 
 ---
 
-## P0 — Critical Blockers (2)
+## P0 — Critical Blockers
 
-### 1. All 3 PRs Awaiting Human Review — BLOCKING SQUAD PROGRESS
-**Description:** All 3 open PRs are passing CI (5/5 checks each) but blocked on `REVIEW_REQUIRED`. GitHub branch protection prevents the EM (authored as jpleva91) from self-approving.
-**PRs blocked:**
-- **#83** — `fix(p0): close governance fail-open vulnerabilities` — closes #58, #59, #62, #67, #69, #75
-- **#84** — `fix(docs): update stale Crush comments in cmdEvaluate (#74)` — closes #74
-- **#85** — `chore(squad): EM state update — run 4` — squad ops housekeeping
-
-**Action Required:** @jpleva91 or a collaborator must review and approve PRs #83, #84, #85.
-**Priority:** Review #83 first — it carries all P0/P1 governance security fixes.
-
-### 2. PR Budget AT LIMIT (3/3) — No New Fix PRs Possible
-**Description:** Squad has reached the max of 3 open PRs. No new work can be opened until at least one PR merges.
-**Impact:** P2 bugs (#65 scheduler silent error, #66 flattenParams dead code, #52 cmdScan glob broken, #53 README stale) remain queued but cannot be addressed.
-**Unblocked by:** Merging any of #83, #84, or #85.
+**None.** All P0 governance bugs are closed.
 
 ---
 
-## P1 — Remaining Work (queued, no new PRs until budget frees)
+## P1 — Active Work
 
-### #68 — Zero test coverage across all packages
-**Severity:** High — governance runtime with no tests is unshipable
-**Impact:** Can't validate fix correctness, no regression protection. Blocks dogfood credibility.
-**Assignee:** qa-agent
-**URL:** https://github.com/AgentGuardHQ/shellforge/issues/68
+### PR #86 — Governance timeout override (awaiting human review)
+**Description:** PR #86 removes the hardcoded 60s cap in `runShellWithRTK` and `runShellRaw` that silently overrode the governance engine's timeout value. CI pending; GitHub branch protection prevents self-approval.
+**Action Required:** @jpleva91 review and approve PR #86.
 
 ### #63 — classifyShellRisk prefix matching too broad
 **Severity:** High — false read-only classification on commands starting with `cat`/`ls`/`echo`
 **Assignee:** qa-agent
 **URL:** https://github.com/AgentGuardHQ/shellforge/issues/63
 
+### #68 — Zero test coverage across all packages
+**Severity:** High — governance runtime with no tests is unshipable
+**Assignee:** qa-agent
+**URL:** https://github.com/AgentGuardHQ/shellforge/issues/68
+
 ---
 
-## P2 — Unassigned (queued, blocked by PR budget)
+## P2 — Queued (unassigned)
 
 | # | Issue | Notes |
 |---|-------|-------|
+| #76 | Dogfood: run ShellForge swarm on jared box | P0 governance bugs resolved — can now proceed |
 | #65 | scheduler.go silent os.WriteFile error | Silent failure on job persistence |
 | #66 | flattenParams dead code | Logic bug, result overwritten before use |
-| #52 | filepath.Glob ** never matches Go files | cmdScan broken for entire scan feature |
+| #52 | filepath.Glob ** never matches Go files | cmdScan scan feature broken |
 | #53 | README stale ./shellforge commands | Docs rot |
+| #51 | run() helper silently ignores errors | Silent failure in main.go |
+| #50 | kernel version comparison lexicographic | setup.sh version gate broken |
+| #49 | InferenceQueue not priority-aware | Documented but unimplemented |
+| #26 | run-qa/report agents don't build binary if missing | Setup gap |
+| #25 | RunResult.Success heuristic incorrect | Agent loop reliability |
+| #24 | listFiles() relative paths bug | Path resolution error |
 
 ---
 
-## Resolved (pending merge of PR #83)
+## Resolved (this cycle)
 
-- **#58** — bounded-execution wildcard policy blocked all run_shell → fix in PR #83
-- **#62** — cmdEvaluate fail-open on JSON unmarshal → fix in PR #83
-- **#75** — govern-shell.sh printf injection → fix in PR #83
-- **#67** — govern-shell.sh fragile sed output parsing → fix in PR #83
-- **#69** — rm policy only blocked -rf/-fr, not plain rm → fix in PR #83
-- **#59** — misleading `# Mode: monitor` comment with `mode: enforce` → fix in PR #83
-- **#74** — stale crush references in cmdEvaluate → fix in PR #84
+- **#58** — bounded-execution wildcard policy blocked all run_shell → merged in PR #83
+- **#62** — cmdEvaluate fail-open on JSON unmarshal → merged in PR #83
+- **#75** — govern-shell.sh printf injection → merged in PR #83
+- **#67** — govern-shell.sh fragile sed output parsing → merged in PR #83
+- **#69** — rm policy only blocked -rf/-fr, not plain rm → merged in PR #83
+- **#74** — stale crush references in cmdEvaluate → merged in PR #84
+- **#59** — misleading `# Mode: monitor` comment → fixed in PR #83, closed manually
 
 ---
 
@@ -66,12 +63,10 @@
 
 | Item | Status |
 |------|--------|
-| PR #83 (P0 fixes) | CI ✅ 5/5 — REVIEW BLOCKED |
-| PR #84 (P1 docs) | CI ✅ 5/5 — REVIEW BLOCKED |
-| PR #85 (EM state) | CI ✅ 5/5 — REVIEW BLOCKED |
-| PR budget | 3/3 AT LIMIT |
-| Dogfood (#76) | BLOCKED on #83 merge |
+| P0 issues | ✅ All closed |
+| PR #86 (P1 timeout fix) | CI pending — REVIEW REQUIRED |
+| PR budget | 1/3 |
+| Dogfood (#76) | Governance unblocked — needs human trigger |
 | QA-agent (#63, #68) | Active |
-| New fix PRs | BLOCKED until budget frees |
 | Retry loops | None |
 | Blast radius | Low |
