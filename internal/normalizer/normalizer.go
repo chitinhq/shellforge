@@ -108,9 +108,11 @@ func classifyShellRisk(command string) action.RiskLevel {
 		}
 	}
 
-	// Check read-only patterns: command must START with one of these.
-	for _, prefix := range readOnlyCommands {
-		if strings.HasPrefix(trimmed, prefix) {
+	// Check read-only patterns: command must be exactly the token or start with
+	// "<token> " (space boundary) to avoid matching longer commands that share a
+	// prefix (e.g. "catalog_tool" matching "cat", "finder.sh" matching "find").
+	for _, cmd := range readOnlyCommands {
+		if trimmed == cmd || strings.HasPrefix(trimmed, cmd+" ") {
 			return action.RiskReadOnly
 		}
 	}
