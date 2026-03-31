@@ -17,6 +17,7 @@ import (
 
 "github.com/AgentGuardHQ/shellforge/internal/agent"
 "github.com/AgentGuardHQ/shellforge/internal/governance"
+"github.com/AgentGuardHQ/shellforge/internal/llm"
 "github.com/AgentGuardHQ/shellforge/internal/logger"
 "github.com/AgentGuardHQ/shellforge/internal/ollama"
 "github.com/AgentGuardHQ/shellforge/internal/scheduler"
@@ -60,11 +61,24 @@ cmdRun(driver, prompt)
 case "evaluate":
 cmdEvaluate()
 case "agent":
-if len(os.Args) < 3 {
-fmt.Fprintln(os.Stderr, "Usage: shellforge agent \"your prompt\"")
+{
+providerName := ""
+remaining := os.Args[2:]
+filtered := remaining[:0]
+for i := 0; i < len(remaining); i++ {
+if remaining[i] == "--provider" && i+1 < len(remaining) {
+providerName = remaining[i+1]
+i++
+} else {
+filtered = append(filtered, remaining[i])
+}
+}
+if len(filtered) == 0 {
+fmt.Fprintln(os.Stderr, "Usage: shellforge agent [--provider <name>] \"your prompt\"")
 os.Exit(1)
 }
-cmdAgent(strings.Join(os.Args[2:], " "))
+cmdAgent(strings.Join(filtered, " "), providerName)
+}
 case "swarm":
 cmdSwarm()
 case "serve":
@@ -656,11 +670,29 @@ printResult("report-agent", result)
 saveReport("outputs/reports", "report", result)
 }
 
-func cmdAgent(prompt string) {
+func cmdAgent(prompt, providerName string) {
 engine := mustGovernance()
-mustOllama()
 
-result, err := agent.RunLoop(agent.LoopConfig{
+var provider llm.Provider
+switch providerName {
+case "anthropic":
+apiKey := os.Getenv("ANTHROPIC_API_KEY")
+if apiKey == "" {
+fmt.Fprintln(os.Stderr, "Error: ANTHROPIC_API_KEY environment variable not set")
+os.Exit(1)
+}
+model := os.Getenv("ANTHROPIC_MODEL")
+if model == "" {
+model = "claude-haiku-4-5-20251001"
+}
+provider = llm.NewAnthropicProvider(apiKey, model)
+fmt.Fprintf(os.Stderr, "Using Anthropic API (model: %s)\n", model)
+default:
+// Legacy Ollama path
+mustOllama()
+}
+
+cfg := agent.LoopConfig{
 Agent:       "prototype-agent",
 System:      "You are a senior engineer. Complete the requested task using available tools. Read files, write files, run commands, search code. Be precise.",
 UserPrompt:  prompt,
@@ -669,7 +701,10 @@ MaxTurns:    15,
 TimeoutMs:   180_000,
 OutputDir:   "outputs/logs",
 TokenBudget: 3000,
-}, engine)
+Provider:    provider,
+}
+
+result, err := agent.RunLoop(cfg, engine)
 if err != nil {
 logger.Error("prototype-agent", err.Error())
 os.Exit(1)
@@ -913,7 +948,7 @@ func printResult(name string, r *agent.RunResult) {
 fmt.Println()
 status := "✓ success"
 if !r.Success {
-status = "✗ failed"
+status = fmt.Sprintf("✗ %s", r.ExitReason)
 }
 fmt.Printf("[%s] %s — %d turns, %d tool calls, %d denials\n", name, status, r.Turns, r.ToolCalls, r.Denials)
 fmt.Printf("  tokens: %d prompt + %d response | %dms\n", r.PromptTok, r.ResponseTok, r.DurationMs)
@@ -927,8 +962,8 @@ func saveReport(dir, prefix string, r *agent.RunResult) {
 os.MkdirAll(dir, 0o755)
 ts := time.Now().Format("2006-01-02T15-04-05")
 path := filepath.Join(dir, fmt.Sprintf("%s-%s.md", prefix, ts))
-content := fmt.Sprintf("# %s — %s\n\n**Turns:** %d | **Tool calls:** %d | **Denials:** %d\n**Tokens:** %d+%d | **Duration:** %dms\n\n%s\n",
-prefix, time.Now().Format(time.RFC3339), r.Turns, r.ToolCalls, r.Denials, r.PromptTok, r.ResponseTok, r.DurationMs, r.Output)
+content := fmt.Sprintf("# %s — %s\n\n**Exit:** %s | **Turns:** %d | **Tool calls:** %d | **Denials:** %d\n**Tokens:** %d+%d | **Duration:** %dms\n\n%s\n",
+prefix, time.Now().Format(time.RFC3339), r.ExitReason, r.Turns, r.ToolCalls, r.Denials, r.PromptTok, r.ResponseTok, r.DurationMs, r.Output)
 os.WriteFile(path, []byte(content), 0o644)
 fmt.Printf("\n→ Saved to %s\n", path)
 }
