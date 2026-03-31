@@ -1,64 +1,74 @@
 {
   "squad": "shellforge",
-  "updated_at": "2026-03-30T08:42:00Z",
+  "updated_at": "2026-03-31T00:00:00Z",
   "sprint": {
-    "goal": "Harden enforcement runtime — fix all P0/P1 governance bugs before dogfood run",
-    "focus": "P0/P1 COMPLETE: all governance bugs closed or in green PR. PR #89 (test coverage + dead code) CI green, awaiting human merge.",
-    "status": "goal_achieved_pending_pr_merge"
+    "goal": "P2 bug sweep + dogfood readiness — #52 (Glob **), #65 (silent WriteFile), #76 (setup.sh remote Ollama)",
+    "focus": "PR #89 merged (25 tests, #68+#66 closed). Fixed #51 in PR #93. Next: #52 (Glob **) and #65 (silent WriteFile) when budget clears.",
+    "status": "active"
   },
   "pr_budget": {
     "max_open": 3,
-    "current_open": 1,
+    "current_open": 2,
     "status": "ok"
   },
   "loop_guard": {
     "retry_loop_detected": false,
     "blast_radius": "low"
   },
+  "incident": {
+    "id": "worktree-dirty-wip-51",
+    "resolved": true,
+    "description": "Worktree had uncommitted partial fix for #51 — import block broken (import \"log\" vs import ()), orphaned run() body left outside function. Build was failing. Stashed WIP, reimplemented cleanly in PR #93."
+  },
   "issue_queue": {
     "p0": [],
-    "p1": [
-      { "number": 28, "title": "bug: bounded-execution policy timeout (300s) is silently overridden to 60s in shell execution", "assignee": "em", "status": "CLOSED — merged PR #86" },
-      { "number": 63, "title": "bug: classifyShellRisk prefix matching too broad — false read-only classification", "assignee": "qa-agent", "status": "CLOSED — merged PR #88" },
-      { "number": 68, "title": "test: zero test coverage across all packages", "assignee": "qa-agent", "status": "PR #89 open, CI green (5/5)" }
-    ],
+    "p1": [],
     "p2": [
-      { "number": 66, "title": "bug: dead code in flattenParams() overwrites result before using it", "assignee": "qa-agent", "status": "covered in PR #89" },
-      { "number": 65, "title": "bug: scheduler.go silently ignores os.WriteFile error", "assignee": null },
-      { "number": 76, "title": "Dogfood: run ShellForge swarm on jared box via RunPod GPU", "assignee": null, "notes": "Blocked on setup.sh: isServer=true skips Goose, remote Ollama (OLLAMA_HOST) not supported" },
-      { "number": 52, "title": "bug: filepath.Glob with ** in cmdScan never matches any Go files", "assignee": null },
+      { "number": 76, "title": "Dogfood: run ShellForge swarm on jared box via RunPod GPU", "assignee": "em", "notes": "Blocked on setup.sh: isServer=true skips Goose, remote Ollama (OLLAMA_HOST) not supported. 3rd escalation." },
+      { "number": 92, "title": "Bundle Preflight protocol in Goose agent bootstrap", "assignee": null, "notes": "Blocked on Preflight v1 ship. Triaged P2 this run." },
+      { "number": 65, "title": "bug: scheduler.go silently ignores os.WriteFile error", "assignee": "em" },
+      { "number": 52, "title": "bug: filepath.Glob with ** in cmdScan never matches any Go files", "assignee": "em" },
       { "number": 53, "title": "docs/readme: README still shows ./shellforge commands", "assignee": null },
-      { "number": 51, "title": "bug: run() helper in main.go silently ignores command errors", "assignee": null },
-      { "number": 50, "title": "bug: kernel version comparison in setup.sh is lexicographic, not numeric", "assignee": null },
-      { "number": 49, "title": "bug: InferenceQueue is not priority-aware despite being documented as such", "assignee": null },
-      { "number": 26, "title": "bug: run-qa-agent.sh and run-report-agent.sh don't build binary if missing", "assignee": null },
-      { "number": 25, "title": "bug: agent RunResult.Success heuristic is incorrect", "assignee": null },
-      { "number": 24, "title": "bug: listFiles() returns paths relative to cwd, not the listed directory", "assignee": null }
+      { "number": 51, "title": "bug: run() helper silently ignores errors", "assignee": "em", "notes": "FIXED — PR #93 open, CI pending" },
+      { "number": 50, "title": "bug: kernel version comparison is lexicographic, not numeric", "assignee": null },
+      { "number": 49, "title": "bug: InferenceQueue is not priority-aware", "assignee": null },
+      { "number": 26, "title": "bug: run-qa-agent.sh doesn't build binary if missing", "assignee": null },
+      { "number": 25, "title": "bug: agent RunResult.Success heuristic incorrect", "assignee": null },
+      { "number": 24, "title": "bug: listFiles() returns paths relative to cwd", "assignee": null }
     ],
     "p3": [
-      { "number": 81, "title": "feat: OpenClaw as governed execution runtime in ShellForge", "assignee": null },
-      { "number": 77, "title": "[research] Evaluate go-agent-framework sandboxing integration", "assignee": null },
-      { "number": 73, "title": "[research] ml-explore/mlx-lm — Apple MLX inference backend", "assignee": null },
-      { "number": 72, "title": "[research] nono — kernel-enforced agent sandbox via macOS Seatbelt", "assignee": null },
-      { "number": 71, "title": "[research] lean-ctx — 88% token reduction via shell hook + MCP server", "assignee": null },
-      { "number": 56, "title": "[research] mem0 — persistent cross-run agent memory", "assignee": null },
+      { "number": 81, "title": "feat: OpenClaw as governed execution runtime", "assignee": null },
+      { "number": 77, "title": "[research] go-agent-framework sandboxing", "assignee": null },
+      { "number": 73, "title": "[research] ml-explore/mlx-lm inference backend", "assignee": null },
+      { "number": 72, "title": "[research] nono — macOS Seatbelt sandbox", "assignee": null },
+      { "number": 71, "title": "[research] lean-ctx — token reduction", "assignee": null },
+      { "number": 56, "title": "[research] mem0 — persistent agent memory", "assignee": null },
       { "number": 55, "title": "[research] microsoft/agent-governance-toolkit", "assignee": null },
-      { "number": 54, "title": "[research] omlx — SSD KV caching doubles swarm capacity", "assignee": null },
-      { "number": 11, "title": "[research] RTK integration — 70-90% token savings for agent runs", "assignee": null },
-      { "number": 10, "title": "[research] TurboQuant integration — 6x KV cache compression", "assignee": null }
+      { "number": 54, "title": "[research] omlx — SSD KV caching", "assignee": null },
+      { "number": 11, "title": "[research] RTK integration", "assignee": null },
+      { "number": 10, "title": "[research] TurboQuant — KV cache compression", "assignee": null }
     ]
   },
   "pr_queue": [
     {
-      "number": 89,
-      "title": "test: initial coverage — normalizer, governance, intent (closes #68, #66)",
+      "number": 91,
+      "title": "chore(squad): EM state update — run 8 (2026-03-30)",
       "status": "open",
       "ci": "green (5/5)",
-      "review_status": "REVIEW_REQUIRED — awaiting human approval",
-      "issues_closed": [68, 66]
+      "review_status": "REVIEW_REQUIRED",
+      "issues_closed": []
+    },
+    {
+      "number": 93,
+      "title": "fix(main): log errors from run() helper — closes #51",
+      "status": "open",
+      "ci": "pending",
+      "review_status": "REVIEW_REQUIRED",
+      "issues_closed": [51]
     }
   ],
   "recently_closed": [
+    { "number": 89, "merged": true, "issues_closed": [68, 66], "date": "2026-03-30", "notes": "25 tests — normalizer, governance, intent" },
     { "number": 88, "merged": true, "issues_closed": [63], "date": "2026-03-30", "notes": "P1 classifyShellRisk word-boundary fix" },
     { "number": 87, "merged": true, "issues_closed": [], "date": "2026-03-30", "notes": "EM state run 6" },
     { "number": 86, "merged": true, "issues_closed": [28], "date": "2026-03-30", "notes": "P1 timeout override fix" },
@@ -66,26 +76,24 @@
     { "number": 84, "merged": true, "issues_closed": [74], "date": "2026-03-30" }
   ],
   "agents": {
-    "qa-agent": { "status": "pr_open", "schedule": "4h", "last_pr": 89, "notes": "Opened PR #89 (25 tests + dead code fix) — solid output" },
+    "qa-agent": { "status": "idle", "schedule": "4h", "last_pr": 89, "notes": "PR #89 merged — idle until next assignment" },
     "report-agent": { "status": "idle", "schedule": "30m", "last_issue": null },
     "security-scanner": { "status": "idle", "schedule": "12h", "last_issue": 75 },
     "slack-notifier": { "status": "disabled", "schedule": "8h", "last_issue": null }
   },
   "capability_gaps": [
-    "No dev-agent in swarm — P0/P1 bugs required EM to author fixes directly",
+    "No dev-agent in swarm — P2 bugs require EM to author fixes directly",
     "setup.sh needs remote Ollama support (OLLAMA_HOST) before dogfood can proceed on headless/GPU-remote boxes"
   ],
   "blockers": [
-    "PR #89 (test coverage + dead code fix): CI green — REVIEW REQUIRED. GitHub branch protection prevents self-approval. @jpleva91 must approve to close last P1 (#68) and P2 #66.",
-    "Dogfood (#76): governance unblocked, but setup.sh isServer check skips Goose on headless servers — needs code fix before jared-box dogfood run."
+    "PR #91 (EM state run 8): CI green — REVIEW REQUIRED. Chore PR.",
+    "PR #93 (fix #51): CI pending — REVIEW REQUIRED. One-line fix, 25/25 tests pass.",
+    "Dogfood (#76): 3rd escalation — setup.sh isServer check skips Goose on headless servers. Needs code fix before jared-box dogfood run."
   ],
-  "next_sprint_proposal": {
-    "goal": "Dogfood readiness — unblock jared-box run and batch P2 bug fixes",
-    "focus": [
-      "Fix setup.sh: support remote Ollama (OLLAMA_HOST) on headless/server deployments (#76)",
-      "P2 batch: #65 (silent WriteFile), #52 (Glob ** broken), #51 (silent run() errors), #50 (version compare)",
-      "README cleanup (#53)"
-    ]
-  },
-  "notes": "Run 7 (2026-03-30T08:42Z): Sprint goal ACHIEVED. PR #86 merged (#28 closed), PR #88 merged (#63 closed), PR #89 opened by qa-agent with 25 tests — green CI. Only remaining action: human review of PR #89 to close last P1 (#68). Dogfood remains blocked on setup.sh remote Ollama gap. Next sprint: pivot to dogfood readiness."
+  "human_escalations": [
+    { "priority": "P2", "title": "Review PR #91 — EM state run 8", "url": "https://github.com/AgentGuardHQ/shellforge/pull/91" },
+    { "priority": "P2", "title": "Review PR #93 — fix run() silent errors (closes #51)", "url": "https://github.com/AgentGuardHQ/shellforge/pull/93" },
+    { "priority": "P2", "title": "Trigger dogfood run (#76) — all governance P0/P1 bugs fixed, blocked on setup.sh remote Ollama gap", "url": "https://github.com/AgentGuardHQ/shellforge/issues/76" }
+  ],
+  "notes": "Run 9 (2026-03-31): Found broken worktree — incomplete WIP fix for #51 left import block broken and run() body orphaned. Stashed, reimplemented cleanly in PR #93. PR #89 now merged (25 tests). Issue #92 (Preflight/Goose) triaged P2. PR budget 2/3. Next: fix #52 (filepath.Walk) and #65 (scheduler WriteFile) when budget clears."
 }
