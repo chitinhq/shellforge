@@ -7,6 +7,7 @@ import (
 "encoding/json"
 "fmt"
 "io"
+"log"
 "os"
 "os/exec"
 "path/filepath"
@@ -930,7 +931,9 @@ func run(name string, args ...string) {
 cmd := exec.Command(name, args...)
 cmd.Stdout = os.Stdout
 cmd.Stderr = os.Stderr
-cmd.Run()
+if err := cmd.Run(); err != nil {
+log.Printf("run %s: %v", name, err)
+}
 }
 
 // hasGPU detects if the machine has a GPU (Metal on macOS, NVIDIA on Linux).
