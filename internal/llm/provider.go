@@ -30,9 +30,11 @@ type ToolCall struct {
 
 // Response is the model's reply to a Chat call.
 type Response struct {
-	Content    string
-	ToolCalls  []ToolCall
-	StopReason string // "end_turn", "tool_use"
-	PromptTok  int
-	OutputTok  int
+	Content      string
+	ToolCalls    []ToolCall
+	StopReason   string // "end_turn", "tool_use"
+	PromptTok    int
+	OutputTok    int
+	CacheCreated int // tokens written to cache (first call)
+	CacheHit     int // tokens read from cache (subsequent calls)
 }

@@ -63,21 +63,25 @@ cmdEvaluate()
 case "agent":
 {
 providerName := ""
+thinkingBudget := 0
 remaining := os.Args[2:]
 filtered := remaining[:0]
 for i := 0; i < len(remaining); i++ {
 if remaining[i] == "--provider" && i+1 < len(remaining) {
 providerName = remaining[i+1]
 i++
+} else if remaining[i] == "--thinking-budget" && i+1 < len(remaining) {
+fmt.Sscanf(remaining[i+1], "%d", &thinkingBudget)
+i++
 } else {
 filtered = append(filtered, remaining[i])
 }
 }
 if len(filtered) == 0 {
-fmt.Fprintln(os.Stderr, "Usage: shellforge agent [--provider <name>] \"your prompt\"")
+fmt.Fprintln(os.Stderr, "Usage: shellforge agent [--provider <name>] [--thinking-budget <tokens>] \"your prompt\"")
 os.Exit(1)
 }
-cmdAgent(strings.Join(filtered, " "), providerName)
+cmdAgent(strings.Join(filtered, " "), providerName, thinkingBudget)
 }
 case "swarm":
 cmdSwarm()
@@ -670,7 +674,7 @@ printResult("report-agent", result)
 saveReport("outputs/reports", "report", result)
 }
 
-func cmdAgent(prompt, providerName string) {
+func cmdAgent(prompt, providerName string, thinkingBudget int) {
 engine := mustGovernance()
 
 var provider llm.Provider
@@ -685,8 +689,14 @@ model := os.Getenv("ANTHROPIC_MODEL")
 if model == "" {
 model = "claude-haiku-4-5-20251001"
 }
-provider = llm.NewAnthropicProvider(apiKey, model)
+p := llm.NewAnthropicProvider(apiKey, model)
+if thinkingBudget > 0 {
+p.ThinkingBudget = thinkingBudget
+fmt.Fprintf(os.Stderr, "Using Anthropic API (model: %s, thinking budget: %d tokens)\n", model, thinkingBudget)
+} else {
 fmt.Fprintf(os.Stderr, "Using Anthropic API (model: %s)\n", model)
+}
+provider = p
 default:
 // Legacy Ollama path
 mustOllama()

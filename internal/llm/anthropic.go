@@ -19,10 +19,11 @@ const (
 
 // AnthropicProvider calls the Anthropic Messages API via stdlib HTTP.
 type AnthropicProvider struct {
-	apiKey  string
-	model   string
-	baseURL string
-	client  *http.Client
+	apiKey         string
+	model          string
+	baseURL        string
+	client         *http.Client
+	ThinkingBudget int // max thinking tokens (0 = disabled)
 }
 
 // NewAnthropicProvider creates an AnthropicProvider.
@@ -70,20 +71,33 @@ type anthropicMessage struct {
 	Content json.RawMessage `json:"content"`
 }
 
+// cacheControl instructs Anthropic to cache this content block for 5 minutes.
+type cacheControl struct {
+	Type string `json:"type"`
+}
+
 // anthropicToolDef is the Anthropic tool definition format.
 type anthropicToolDef struct {
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	InputSchema map[string]any `json:"input_schema"`
+	Name         string         `json:"name"`
+	Description  string         `json:"description"`
+	InputSchema  map[string]any `json:"input_schema"`
+	CacheControl *cacheControl  `json:"cache_control,omitempty"`
+}
+
+// anthropicThinking configures extended thinking (chain-of-thought).
+type anthropicThinking struct {
+	Type         string `json:"type"`          // "enabled"
+	BudgetTokens int    `json:"budget_tokens"` // max thinking tokens
 }
 
 // anthropicRequest is the full POST body for /v1/messages.
 type anthropicRequest struct {
-	Model     string             `json:"model"`
-	MaxTokens int                `json:"max_tokens"`
-	System    string             `json:"system,omitempty"`
-	Messages  []anthropicMessage `json:"messages"`
-	Tools     []anthropicToolDef `json:"tools,omitempty"`
+	Model     string              `json:"model"`
+	MaxTokens int                 `json:"max_tokens"`
+	System    json.RawMessage     `json:"system,omitempty"`
+	Messages  []anthropicMessage  `json:"messages"`
+	Tools     []anthropicToolDef  `json:"tools,omitempty"`
+	Thinking  *anthropicThinking  `json:"thinking,omitempty"`
 }
 
 // anthropicResponse is the API response body.
@@ -92,8 +106,10 @@ type anthropicResponse struct {
 	Content    []anthropicContentBlock `json:"content"`
 	StopReason string                  `json:"stop_reason"`
 	Usage      struct {
-		InputTokens  int `json:"input_tokens"`
-		OutputTokens int `json:"output_tokens"`
+		InputTokens              int `json:"input_tokens"`
+		OutputTokens             int `json:"output_tokens"`
+		CacheCreationInputTokens int `json:"cache_creation_input_tokens"`
+		CacheReadInputTokens     int `json:"cache_read_input_tokens"`
 	} `json:"usage"`
 }
 
@@ -149,10 +165,36 @@ func (a *AnthropicProvider) Chat(messages []Message, tools []ToolDef) (*Response
 	reqBody := anthropicRequest{
 		Model:     a.model,
 		MaxTokens: anthropicMaxTokens,
-		System:    systemPrompt,
 		Messages:  apiMsgs,
 	}
+
+	// Enable extended thinking with budget cap if configured.
+	if a.ThinkingBudget > 0 {
+		reqBody.Thinking = &anthropicThinking{
+			Type:         "enabled",
+			BudgetTokens: a.ThinkingBudget,
+		}
+		// When thinking is enabled, max_tokens must cover thinking + output.
+		if reqBody.MaxTokens < a.ThinkingBudget+1024 {
+			reqBody.MaxTokens = a.ThinkingBudget + 1024
+		}
+	}
+
+	// Build system as array of content blocks with cache_control on the last block.
+	if systemPrompt != "" {
+		systemBlocks := []map[string]any{
+			{
+				"type":          "text",
+				"text":          systemPrompt,
+				"cache_control": map[string]string{"type": "ephemeral"},
+			},
+		}
+		reqBody.System, _ = json.Marshal(systemBlocks)
+	}
+
+	// Add cache_control to last tool so tool definitions are cached.
 	if len(apiTools) > 0 {
+		apiTools[len(apiTools)-1].CacheControl = &cacheControl{Type: "ephemeral"}
 		reqBody.Tools = apiTools
 	}
 
@@ -167,6 +209,7 @@ func (a *AnthropicProvider) Chat(messages []Message, tools []ToolDef) (*Response
 	}
 	req.Header.Set("x-api-key", a.apiKey)
 	req.Header.Set("anthropic-version", anthropicVersion)
+	req.Header.Set("anthropic-beta", "prompt-caching-2024-07-31")
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := a.client.Do(req)
@@ -273,13 +316,20 @@ func convertMessages(messages []Message) ([]anthropicMessage, error) {
 // parseResponse converts an anthropicResponse into an llm.Response.
 func parseResponse(apiResp *anthropicResponse) *Response {
 	resp := &Response{
-		StopReason: apiResp.StopReason,
-		PromptTok:  apiResp.Usage.InputTokens,
-		OutputTok:  apiResp.Usage.OutputTokens,
+		StopReason:   apiResp.StopReason,
+		PromptTok:    apiResp.Usage.InputTokens,
+		OutputTok:    apiResp.Usage.OutputTokens,
+		CacheCreated: apiResp.Usage.CacheCreationInputTokens,
+		CacheHit:     apiResp.Usage.CacheReadInputTokens,
 	}
 
 	for _, block := range apiResp.Content {
 		switch block.Type {
+		case "thinking":
+			// Extended thinking output — consumed for token accounting
+			// but not included in Content (internal reasoning).
+			continue
+
 		case "text":
 			if resp.Content != "" {
 				resp.Content += "\n"
