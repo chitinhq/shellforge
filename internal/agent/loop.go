@@ -18,6 +18,7 @@ import (
 "github.com/AgentGuardHQ/shellforge/internal/correction"
 "github.com/AgentGuardHQ/shellforge/internal/governance"
 "github.com/AgentGuardHQ/shellforge/internal/intent"
+"github.com/AgentGuardHQ/shellforge/internal/llm"
 "github.com/AgentGuardHQ/shellforge/internal/logger"
 "github.com/AgentGuardHQ/shellforge/internal/normalizer"
 "github.com/AgentGuardHQ/shellforge/internal/ollama"
@@ -33,10 +34,12 @@ MaxTurns    int
 TimeoutMs   int
 OutputDir   string
 TokenBudget int
+Provider    llm.Provider // optional; nil falls back to legacy ollama.Chat()
 }
 
 type RunResult struct {
 Success     bool
+ExitReason  string // "final_answer", "timeout", "max_turns", "model_error"
 Output      string
 Turns       int
 ToolCalls   int
@@ -72,6 +75,8 @@ for turn := 1; turn <= cfg.MaxTurns; turn++ {
 elapsed := time.Since(start).Milliseconds()
 if int(elapsed) > cfg.TimeoutMs {
 logger.Agent(cfg.Agent, fmt.Sprintf("timeout after %d turns", turn-1))
+result.Turns = turn - 1
+result.ExitReason = "timeout"
 break
 }
 
@@ -81,18 +86,42 @@ compacted := compactMessages(messages, cfg.TokenBudget)
 tokEst := estimateTokens(compacted)
 logger.Agent(cfg.Agent, fmt.Sprintf("turn %d/%d (~%d tokens)", turn, cfg.MaxTurns, tokEst))
 
+var content string
+var promptTok, outputTok int
+var totalDurMs int64
+
+if cfg.Provider != nil {
+llmMsgs := toProviderMessages(compacted)
+provResp, perr := cfg.Provider.Chat(llmMsgs, nil)
+if perr != nil {
+logger.Error(cfg.Agent, cfg.Provider.Name()+": "+perr.Error())
+result.Output = "Model error: " + perr.Error()
+result.Turns = turn
+result.ExitReason = "model_error"
+break
+}
+content = provResp.Content
+promptTok = provResp.PromptTok
+outputTok = provResp.OutputTok
+} else {
 resp, err := ollama.Chat(compacted, cfg.Model)
 if err != nil {
 logger.Error(cfg.Agent, "ollama: "+err.Error())
 result.Output = "Model error: " + err.Error()
+result.Turns = turn
+result.ExitReason = "model_error"
 break
 }
+content = resp.Message.Content
+promptTok = resp.PromptEval
+outputTok = resp.EvalCount
+totalDurMs = resp.TotalDuration / 1_000_000
+}
 
-result.PromptTok += resp.PromptEval
-result.ResponseTok += resp.EvalCount
-logger.ModelCall(cfg.Agent, resp.PromptEval, resp.EvalCount, resp.TotalDuration/1_000_000)
+result.PromptTok += promptTok
+result.ResponseTok += outputTok
+logger.ModelCall(cfg.Agent, promptTok, outputTok, totalDurMs)
 
-content := resp.Message.Content
 messages = append(messages, ollama.ChatMessage{Role: "assistant", Content: content})
 
 // ── Intent parser: extract action from ANY format ──
@@ -103,6 +132,7 @@ if parsed == nil {
 // No actionable intent — this is a final answer.
 result.Output = content
 result.Turns = turn
+result.ExitReason = "final_answer"
 logger.Agent(cfg.Agent, fmt.Sprintf("done — %d turns, %d tool calls", turn, result.ToolCalls))
 break
 }
@@ -193,6 +223,15 @@ messages = append(messages, ollama.ChatMessage{
 Role:    "user",
 Content: "You've used all turns. Give your final answer now.",
 })
+if cfg.Provider != nil {
+finalMsgs := toProviderMessages(compactMessages(messages, cfg.TokenBudget))
+finalResp, ferr := cfg.Provider.Chat(finalMsgs, nil)
+if ferr == nil {
+result.Output = finalResp.Content
+result.PromptTok += finalResp.PromptTok
+result.ResponseTok += finalResp.OutputTok
+}
+} else {
 final, err := ollama.Chat(compactMessages(messages, cfg.TokenBudget), cfg.Model)
 if err == nil {
 result.Output = final.Message.Content
@@ -200,10 +239,13 @@ result.PromptTok += final.PromptEval
 result.ResponseTok += final.EvalCount
 }
 }
+result.Turns = turn
+result.ExitReason = "max_turns"
+}
 }
 
 result.DurationMs = time.Since(start).Milliseconds()
-result.Success = result.Denials == 0 || result.ToolCalls > result.Denials
+result.Success = result.ExitReason == "final_answer"
 result.Log = log
 return result, nil
 }
@@ -288,4 +330,14 @@ if b {
 return t
 }
 return f
+}
+
+// toProviderMessages converts []ollama.ChatMessage to []llm.Message for use
+// with the Provider interface.
+func toProviderMessages(msgs []ollama.ChatMessage) []llm.Message {
+result := make([]llm.Message, len(msgs))
+for i, m := range msgs {
+result[i] = llm.Message{Role: m.Role, Content: m.Content}
+}
+return result
 }
