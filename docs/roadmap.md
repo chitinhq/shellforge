@@ -33,12 +33,21 @@
 - [x] Tested Aider (file editing only, no shell execution)
 - [x] Evaluated Goose (Block) — native Ollama, actually executes tools
 
-### v0.6.0 — Goose + Governed Shell ← CURRENT
+### v0.6.0 — Goose + Governed Shell
 - [x] Goose as local model driver (`shellforge run goose`)
 - [x] `govern-shell.sh` — shell wrapper that evaluates every command through AgentGuard
 - [x] `shellforge run goose` sets SHELL to governed wrapper automatically
 - [x] Fixed catch-all deny bug (bounded-execution policy was denying everything)
 - [x] Dagu DAG templates (sdlc-swarm, studio-swarm, workspace-swarm, multi-driver)
+
+### v0.7.0 — Anthropic API Provider ← CURRENT
+- [x] LLM provider interface (`llm.Provider`) — pluggable Ollama vs Anthropic backends
+- [x] Anthropic API adapter — stdlib HTTP, structured `tool_use` blocks, multi-turn history
+- [x] Prompt caching — `cache_control: ephemeral` on system + tools, ~90% savings on cached tokens
+- [x] Extended thinking budget (`--thinking-budget` flag)
+- [x] Model cascading via Octi Pulpo (Haiku→Sonnet→Opus by `TaskComplexity` score)
+- [x] Drift detection — self-score every 5 tool calls, steer below 7, kill below 5 twice
+- [x] RTK token compression wired into `runShellWithRTK()` (70-90% savings on shell output)
 
 ---
 
@@ -110,11 +119,10 @@ ShellForge orchestrates, Octi Pulpo coordinates, AgentGuard governs. This phase 
 - [ ] Move `internal/` types to `pkg/` for external import
 - [ ] Cloud telemetry opt-in (AgentGuard Cloud)
 
-### Phase 11 — Replace Workspace Bash Swarm
-- [ ] Dagu replaces `server/deploy.sh` + cron + queue.txt
-- [ ] Multi-driver DAGs: Claude Code + Copilot + Codex on Linux box
-- [ ] Same governance policy across all drivers
-- [ ] ShellForge as the runtime for agentguard-workspace swarm
+### Phase 11 — Replace Workspace Bash Swarm ✅ DONE
+- [x] Migrated to API-driven dispatch: Octi Pulpo → ShellForge → Anthropic API
+- [x] GH Actions Copilot Agent workflow (`dispatch-agent.yml`) for free-tier automation
+- [x] ShellForge is now the execution harness for the agentguard-workspace swarm
 
 ---
 

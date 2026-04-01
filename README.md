@@ -2,14 +2,14 @@
 
 # ShellForge
 
-**Governed local AI agents — one Go binary, zero cloud.**
+**Governed AI agent runtime — one Go binary, local or cloud.**
 
 [![Go](https://img.shields.io/badge/Go-1.18+-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev)
 [![GitHub Pages](https://img.shields.io/badge/Live_Site-agentguardhq.github.io/shellforge-ff6b2b?style=for-the-badge)](https://agentguardhq.github.io/shellforge)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 [![AgentGuard](https://img.shields.io/badge/Governed_by-AgentGuard-green?style=for-the-badge)](https://github.com/AgentGuardHQ/agentguard)
 
-*Run autonomous AI agents on your machine with policy enforcement on every tool call. No cloud. No API keys. No data leaves your laptop.*
+*Run autonomous AI agents with policy enforcement on every tool call. Local via Ollama or cloud via Anthropic API — your choice.*
 
 [Website](https://agentguardhq.github.io/shellforge) · [Docs](docs/architecture.md) · [Roadmap](docs/roadmap.md) · [AgentGuard](https://github.com/AgentGuardHQ/agentguard)
 
@@ -112,9 +112,11 @@ shellforge status
 
 | Command | Description |
 |---------|-------------|
-| `shellforge run <driver> "prompt"` | Run a governed agent (goose, claude, copilot, codex, gemini) |
+| `shellforge agent "prompt"` | Run a governed agent (Ollama, default) |
+| `shellforge agent --provider anthropic "prompt"` | Run via Anthropic API (Haiku/Sonnet/Opus, prompt caching) |
+| `shellforge agent --thinking-budget 8000 "prompt"` | Enable extended thinking (Sonnet/Opus) |
+| `shellforge run <driver> "prompt"` | Run a governed CLI driver (goose, claude, copilot, codex, gemini) |
 | `shellforge setup` | Install Ollama, create governance config, verify stack |
-| `shellforge agent "prompt"` | Run a governed agent — every tool call checked |
 | `shellforge qa [dir]` | QA analysis — find test gaps and issues |
 | `shellforge report [repo]` | Generate a status report from git + logs |
 | `shellforge serve agents.yaml` | Daemon mode — run a 24/7 agent swarm |
