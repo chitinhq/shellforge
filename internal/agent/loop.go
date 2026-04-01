@@ -80,6 +80,7 @@ func runProviderLoop(cfg LoopConfig, engine *governance.Engine, start time.Time)
 	}
 
 	toolDefs := buildToolDefs()
+	drift := newDriftDetector(cfg.UserPrompt)
 
 	result := &RunResult{}
 	var log []string
@@ -112,6 +113,10 @@ func runProviderLoop(cfg LoopConfig, engine *governance.Engine, start time.Time)
 		result.PromptTok += provResp.PromptTok
 		result.ResponseTok += provResp.OutputTok
 		logger.ModelCall(cfg.Agent, provResp.PromptTok, provResp.OutputTok, 0)
+		if provResp.CacheHit > 0 {
+			logger.Agent(cfg.Agent, fmt.Sprintf("cache hit: %d tokens (saved ~%.1f%%)",
+				provResp.CacheHit, float64(provResp.CacheHit)/float64(provResp.PromptTok+provResp.CacheHit)*100))
+		}
 
 		// ── Native tool-use path ──
 		if len(provResp.ToolCalls) > 0 {
@@ -199,6 +204,41 @@ func runProviderLoop(cfg LoopConfig, engine *governance.Engine, start time.Time)
 				})
 
 				log = append(log, fmt.Sprintf("[turn %d] %s → %s", turn, tc.Name, boolStr(toolResult.Success, "ok", "fail")))
+
+				// Record action for drift detection.
+				drift.record(tc.Name, tc.Params)
+			}
+
+			// ── Drift detection: check every N tool calls ──
+			if drift.shouldCheck(result.ToolCalls) {
+				logger.Agent(cfg.Agent, "drift check...")
+				driftMsgs := []llm.Message{
+					{Role: "user", Content: drift.buildCheckPrompt()},
+				}
+				driftResp, derr := cfg.Provider.Chat(driftMsgs, nil)
+				if derr == nil {
+					score := parseScore(driftResp.Content)
+					result.PromptTok += driftResp.PromptTok
+					result.ResponseTok += driftResp.OutputTok
+
+					action := drift.evaluate(score)
+					switch action {
+					case driftWarn:
+						logger.Agent(cfg.Agent, fmt.Sprintf("drift warning — score %d/10, warning #%d", score, drift.warnings))
+						messages = append(messages, llm.Message{
+							Role:    "user",
+							Content: drift.steeringMessage(),
+						})
+					case driftKill:
+						logger.Agent(cfg.Agent, fmt.Sprintf("drift kill — score %d/10, terminating", score))
+						result.ExitReason = "drift"
+						result.Output = "Task terminated: agent drifted from original task spec."
+						result.Turns = turn
+						goto done
+					default:
+						logger.Agent(cfg.Agent, fmt.Sprintf("drift ok — score %d/10", score))
+					}
+				}
 			}
 
 			// Last turn: force final answer
@@ -228,6 +268,7 @@ func runProviderLoop(cfg LoopConfig, engine *governance.Engine, start time.Time)
 		break
 	}
 
+done:
 	result.DurationMs = time.Since(start).Milliseconds()
 	result.Success = result.ExitReason == "final_answer"
 	result.Log = log
