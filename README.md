@@ -91,7 +91,7 @@ Agent Driver (Goose, Claude Code, Copilot CLI)
 | **Infer** | [Ollama](https://ollama.com) | Local LLM inference (Metal GPU on Mac) |
 | **Optimize** | [RTK](https://github.com/rtk-ai/rtk) | Token compression — 70-90% reduction on shell output |
 | **Execute** | [Goose](https://block.github.io/goose) | AI coding agent with native Ollama support (headless) |
-| **Orchestrate** | [Dagu](https://github.com/dagu-org/dagu) | YAML DAG workflows with scheduling and web UI |
+| **Coordinate** | [Octi Pulpo](https://github.com/AgentGuardHQ/octi-pulpo) | Budget-aware dispatch, episodic memory, model cascading |
 | **Govern** | [AgentGuard](https://github.com/AgentGuardHQ/agentguard) | Policy enforcement on every action — allow/deny/correct |
 | **Sandbox** | [OpenShell](https://github.com/NVIDIA/OpenShell) | Kernel-level isolation (Docker on macOS) |
 | **Scan** | [DefenseClaw](https://github.com/cisco-ai-defense/defenseclaw) | Supply chain scanner — AI Bill of Materials |
@@ -101,7 +101,7 @@ shellforge status
 # Ollama        running (qwen3:30b loaded)
 # RTK           v0.4.2
 # AgentGuard    enforce mode (5 rules)
-# Dagu          connected (web UI at :8080)
+# Octi Pulpo    connected (http://localhost:8080)
 # OpenShell     Docker sandbox active
 # DefenseClaw   scanner ready
 ```
@@ -151,14 +151,14 @@ See `dags/multi-driver-swarm.yaml` and `dags/workspace-swarm.yaml` for examples.
 
 ```
 ┌───────────────────────────────────────────────────┐
-│  Dagu (Orchestration)                              │
-│  YAML DAGs · Cron scheduling · Web UI · Retries    │
+│  Octi Pulpo (Coordination)                         │
+│  Budget-aware dispatch · Memory · Model cascading  │
 └────────────────────┬──────────────────────────────┘
                      │ task
 ┌────────────────────▼──────────────────────────────┐
-│  Goose (Execution Engine)                          │
-│  Agent loop · Tool calling · Ollama-native         │
-│  Uses Ollama for inference                         │
+│  ShellForge Agent Loop                             │
+│  LLM provider · Tool calling · Drift detection     │
+│  Anthropic API or Ollama                           │
 └────────────────────┬──────────────────────────────┘
                      │ tool call
           ═══════════╪═══════════
