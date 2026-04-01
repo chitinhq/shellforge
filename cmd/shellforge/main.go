@@ -21,6 +21,7 @@ import (
 "github.com/AgentGuardHQ/shellforge/internal/llm"
 "github.com/AgentGuardHQ/shellforge/internal/logger"
 "github.com/AgentGuardHQ/shellforge/internal/ollama"
+"github.com/AgentGuardHQ/shellforge/internal/repl"
 "github.com/AgentGuardHQ/shellforge/internal/scheduler"
 )
 
@@ -84,6 +85,8 @@ os.Exit(1)
 }
 cmdAgent(strings.Join(filtered, " "), providerName, thinkingBudget)
 }
+case "chat":
+cmdChat()
 case "swarm":
 cmdSwarm()
 case "serve":
@@ -116,6 +119,7 @@ Usage:
   shellforge qa [target]            QA analysis with tool use + governance
   shellforge report [repo]          Weekly status report from git + logs
   shellforge agent "prompt"         Run any task with agentic tool use
+  shellforge chat                   Interactive pair-programming REPL
   shellforge status                 Full ecosystem health check
   shellforge scan [dir]             DefenseClaw supply chain scan
   shellforge version                Print version
@@ -722,6 +726,66 @@ os.Exit(1)
 }
 printResult("prototype-agent", result)
 saveReport("outputs/logs", "prototype", result)
+}
+
+func cmdChat() {
+engine := mustGovernance()
+
+providerName := ""
+model := ""
+remaining := os.Args[2:]
+for i := 0; i < len(remaining); i++ {
+switch remaining[i] {
+case "--provider":
+if i+1 < len(remaining) {
+providerName = remaining[i+1]
+i++
+}
+case "--model":
+if i+1 < len(remaining) {
+model = remaining[i+1]
+i++
+}
+}
+}
+
+var provider llm.Provider
+switch providerName {
+case "anthropic":
+apiKey := os.Getenv("ANTHROPIC_API_KEY")
+if apiKey == "" {
+fmt.Fprintln(os.Stderr, "Error: ANTHROPIC_API_KEY environment variable not set")
+os.Exit(1)
+}
+if model == "" {
+model = os.Getenv("ANTHROPIC_MODEL")
+if model == "" {
+model = "claude-haiku-4-5-20251001"
+}
+}
+provider = llm.NewAnthropicProvider(apiKey, model)
+default:
+mustOllama()
+if model == "" {
+model = ollama.Model
+}
+provider = llm.NewOllamaProvider("", model)
+}
+
+cfg := repl.REPLConfig{
+Agent:       "shellforge-repl",
+System:      "You are a senior engineer. Complete the requested task using available tools. Read files, write files, run commands, search code. Be precise and helpful.",
+Model:       model,
+MaxTurns:    15,
+TokenBudget: 8000,
+Provider:    provider,
+Governance:  engine,
+}
+
+if err := repl.RunREPL(cfg); err != nil {
+fmt.Fprintf(os.Stderr, "REPL error: %s\n", err)
+os.Exit(1)
+}
 }
 
 func cmdSwarm() {
