@@ -191,8 +191,19 @@ func TestAnthropicChat_SystemPrompt(t *testing.T) {
 		t.Fatalf("Chat() error: %v", err)
 	}
 
-	if captured.System != "You are a helpful assistant." {
-		t.Errorf("System = %q, want %q", captured.System, "You are a helpful assistant.")
+	// System is now a JSON array of content blocks with cache_control.
+	var systemBlocks []map[string]any
+	if err := json.Unmarshal(captured.System, &systemBlocks); err != nil {
+		t.Fatalf("decode System blocks: %v", err)
+	}
+	if len(systemBlocks) != 1 {
+		t.Fatalf("len(systemBlocks) = %d, want 1", len(systemBlocks))
+	}
+	if got := systemBlocks[0]["text"]; got != "You are a helpful assistant." {
+		t.Errorf("System text = %q, want %q", got, "You are a helpful assistant.")
+	}
+	if cc, ok := systemBlocks[0]["cache_control"].(map[string]any); !ok || cc["type"] != "ephemeral" {
+		t.Errorf("System block missing cache_control ephemeral, got: %v", systemBlocks[0]["cache_control"])
 	}
 
 	// The system message should NOT appear in the messages array.
@@ -266,6 +277,45 @@ func TestAnthropicChat_ToolResult(t *testing.T) {
 	}
 	if block.Content != "file contents here" {
 		t.Errorf("block.Content = %q, want %q", block.Content, "file contents here")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Test 6: Cache metrics parsed from usage response
+// ---------------------------------------------------------------------------
+
+func TestAnthropicChat_CacheMetrics(t *testing.T) {
+	apiResp := anthropicResponse{
+		ID: "msg_005",
+		Content: []anthropicContentBlock{
+			{Type: "text", Text: "Cached response."},
+		},
+		StopReason: "end_turn",
+	}
+	apiResp.Usage.InputTokens = 50
+	apiResp.Usage.OutputTokens = 10
+	apiResp.Usage.CacheCreationInputTokens = 500
+	apiResp.Usage.CacheReadInputTokens = 450
+
+	srv := mockServer(t, apiResp)
+	defer srv.Close()
+
+	p := newAnthropicTestProvider(srv.URL)
+	resp, err := p.Chat([]Message{{Role: "user", Content: "Hello"}}, nil)
+	if err != nil {
+		t.Fatalf("Chat() error: %v", err)
+	}
+	if resp.CacheCreated != 500 {
+		t.Errorf("CacheCreated = %d, want 500", resp.CacheCreated)
+	}
+	if resp.CacheHit != 450 {
+		t.Errorf("CacheHit = %d, want 450", resp.CacheHit)
+	}
+	if resp.PromptTok != 50 {
+		t.Errorf("PromptTok = %d, want 50", resp.PromptTok)
+	}
+	if resp.OutputTok != 10 {
+		t.Errorf("OutputTok = %d, want 10", resp.OutputTok)
 	}
 }
 

@@ -239,7 +239,9 @@ func (s *Scheduler) executeAgent(agent AgentConfig) {
 	// Write run log
 	logContent := fmt.Sprintf("[%s] %s %s (%s)%s\n",
 		time.Now().Format(time.RFC3339), agent.Name, status, elapsed.Round(time.Second), errMsg)
-	os.WriteFile(logPath, []byte(logContent), 0o644)
+	if err := os.WriteFile(logPath, []byte(logContent), 0o644); err != nil {
+		fmt.Printf("[scheduler] ⚠ %s: failed to write log: %s\n", agent.Name, err)
+	}
 }
 
 // parseInterval converts schedule strings to durations.

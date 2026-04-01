@@ -1,0 +1,37 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'W=${AGENTGUARD_WORKSPACE:-$HOME/agentguard-workspace}; BIN=${AGENTGUARD_BIN:-node $W/agent-guard/apps/cli/dist/bin.js}; $BIN claude-hook pre --store sqlite'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'W=${AGENTGUARD_WORKSPACE:-$HOME/agentguard-workspace}; BIN=${AGENTGUARD_BIN:-node $W/agent-guard/apps/cli/dist/bin.js}; $BIN claude-hook post --store sqlite'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'W=${AGENTGUARD_WORKSPACE:-$HOME/agentguard-workspace}; BIN=${AGENTGUARD_BIN:-node $W/agent-guard/apps/cli/dist/bin.js}; $BIN claude-hook stop --store sqlite'",
+            "timeout": 15000,
+            "blocking": false
+          }
+        ]
+      }
+    ]
+  }
+}
