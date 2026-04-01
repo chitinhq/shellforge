@@ -21,6 +21,7 @@ import (
 "github.com/AgentGuardHQ/shellforge/internal/llm"
 "github.com/AgentGuardHQ/shellforge/internal/logger"
 "github.com/AgentGuardHQ/shellforge/internal/ollama"
+"github.com/AgentGuardHQ/shellforge/internal/ralph"
 "github.com/AgentGuardHQ/shellforge/internal/scheduler"
 )
 
@@ -84,6 +85,8 @@ os.Exit(1)
 }
 cmdAgent(strings.Join(filtered, " "), providerName, thinkingBudget)
 }
+case "ralph":
+cmdRalph()
 case "swarm":
 cmdSwarm()
 case "serve":
@@ -120,6 +123,7 @@ Usage:
   shellforge scan [dir]             DefenseClaw supply chain scan
   shellforge version                Print version
 
+  shellforge ralph [flags]          Run Ralph Loop (stateless-iterative task execution)
   shellforge serve [config]        Simple daemon mode (built-in scheduler)
   shellforge swarm                 Setup Dagu orchestration (DAG workflows + web UI)
 
@@ -722,6 +726,121 @@ os.Exit(1)
 }
 printResult("prototype-agent", result)
 saveReport("outputs/logs", "prototype", result)
+}
+
+func cmdRalph() {
+engine := mustGovernance()
+
+// Parse flags
+taskFile := "tasks.json"
+logFile := "ralph-log.jsonl"
+providerName := ""
+dryRun := false
+autoCommit := false
+maxTasks := 0
+var validate []string
+
+remaining := os.Args[2:]
+for i := 0; i < len(remaining); i++ {
+	switch remaining[i] {
+	case "--tasks":
+		if i+1 < len(remaining) {
+			taskFile = remaining[i+1]
+			i++
+		}
+	case "--log":
+		if i+1 < len(remaining) {
+			logFile = remaining[i+1]
+			i++
+		}
+	case "--provider":
+		if i+1 < len(remaining) {
+			providerName = remaining[i+1]
+			i++
+		}
+	case "--validate":
+		if i+1 < len(remaining) {
+			validate = append(validate, remaining[i+1])
+			i++
+		}
+	case "--dry-run":
+		dryRun = true
+	case "--auto-commit":
+		autoCommit = true
+	case "--max-tasks":
+		if i+1 < len(remaining) {
+			fmt.Sscanf(remaining[i+1], "%d", &maxTasks)
+			i++
+		}
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown ralph flag: %s\n", remaining[i])
+		fmt.Fprintln(os.Stderr, "Usage: shellforge ralph [--tasks file] [--log file] [--provider name] [--validate cmd] [--dry-run] [--auto-commit] [--max-tasks N]")
+		os.Exit(1)
+	}
+}
+
+var provider llm.Provider
+switch providerName {
+case "anthropic":
+	apiKey := os.Getenv("ANTHROPIC_API_KEY")
+	if apiKey == "" {
+		fmt.Fprintln(os.Stderr, "Error: ANTHROPIC_API_KEY environment variable not set")
+		os.Exit(1)
+	}
+	model := os.Getenv("ANTHROPIC_MODEL")
+	if model == "" {
+		model = "claude-haiku-4-5-20251001"
+	}
+	provider = llm.NewAnthropicProvider(apiKey, model)
+	fmt.Fprintf(os.Stderr, "[ralph] Using Anthropic API (model: %s)\n", model)
+case "":
+	// Legacy Ollama path
+	mustOllama()
+default:
+	fmt.Fprintf(os.Stderr, "Unknown provider: %s\n", providerName)
+	os.Exit(1)
+}
+
+cfg := ralph.RalphConfig{
+	TaskSource: ralph.SourceFile,
+	TaskFile:   taskFile,
+	LogFile:    logFile,
+	Validate:   validate,
+	AutoCommit: autoCommit,
+	MaxTasks:   maxTasks,
+	DryRun:     dryRun,
+	LoopConfig: agent.LoopConfig{
+		Agent:       "ralph-agent",
+		System:      "You are a senior engineer. Complete the requested task using available tools. Read files, write files, run commands. Be precise and thorough.",
+		Model:       ollama.Model,
+		MaxTurns:    15,
+		TimeoutMs:   180_000,
+		OutputDir:   "outputs/logs",
+		TokenBudget: 3000,
+		Provider:    provider,
+	},
+}
+
+fmt.Printf("[ralph] Starting Ralph Loop — tasks: %s, dry-run: %v\n", taskFile, dryRun)
+
+result, err := ralph.RunRalph(cfg, engine)
+if err != nil {
+	fmt.Fprintf(os.Stderr, "ERROR: ralph loop: %s\n", err)
+	os.Exit(1)
+}
+
+fmt.Println()
+fmt.Printf("[ralph] Complete — %d completed, %d failed, %d skipped (of %d total)\n",
+	result.Completed, result.Failed, result.Skipped, result.Total)
+
+for _, entry := range result.Entries {
+	status := "completed"
+	if entry.Status == ralph.StatusFailed {
+		status = "FAILED"
+	}
+	fmt.Printf("  [%s] task %s: %s (%d turns, %dms)\n",
+		status, entry.TaskID, entry.Description, entry.Turns, entry.DurationMs)
+}
 }
 
 func cmdSwarm() {

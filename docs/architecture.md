@@ -123,9 +123,14 @@ cmd/shellforge/
 └── status.go       # Ecosystem health check
 
 internal/
+├── llm/            # LLM provider interface
+│   ├── provider.go # Provider interface (Chat, Name) + Message/Response types
+│   └── anthropic.go# Anthropic API adapter (stdlib HTTP, prompt caching, tool_use)
+├── agent/          # Agentic loop
+│   ├── loop.go     # runProviderLoop (Anthropic) + runOllamaLoop, drift detection wiring
+│   └── drift.go    # Drift detector — self-score every 5 calls, steer/kill on low scores
 ├── governance/     # agentguard.yaml parser + policy engine
 ├── ollama/         # Ollama HTTP client (chat, generate)
-├── agent/          # Native fallback agentic loop
 ├── tools/          # 5 tool implementations + RTK wrapper
 ├── engine/         # Pluggable engine interface (Goose, OpenClaw, OpenCode)
 ├── logger/         # Structured JSON logging
