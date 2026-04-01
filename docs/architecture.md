@@ -109,7 +109,7 @@ Octi Pulpo routes tasks to the cheapest capable driver:
 | **Infer** | [Ollama](https://ollama.com) | Local LLM inference (Metal GPU on Mac) |
 | **Optimize** | [RTK](https://github.com/rtk-ai/rtk) | Token compression — 70-90% reduction on shell output |
 | **Execute** | [Goose](https://block.github.io/goose) / [OpenClaw](https://github.com/openclaw/openclaw) | Agent execution + browser automation |
-| **Orchestrate** | [Dagu](https://github.com/dagu-org/dagu) | YAML DAG workflows with scheduling and web UI |
+| **Coordinate** | [Octi Pulpo](https://github.com/AgentGuardHQ/octi-pulpo) | Budget-aware dispatch, episodic memory, model cascading |
 | **Coordinate** | [Octi Pulpo](https://github.com/AgentGuardHQ/octi-pulpo) | Swarm coordination via MCP |
 | **Govern** | [AgentGuard](https://github.com/AgentGuardHQ/agentguard) | Policy enforcement on every action |
 | **Sandbox** | [OpenShell](https://github.com/NVIDIA/OpenShell) | Kernel-level isolation (Docker on macOS) |
