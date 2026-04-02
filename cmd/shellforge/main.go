@@ -22,6 +22,7 @@ import (
 "github.com/AgentGuardHQ/shellforge/internal/logger"
 "github.com/AgentGuardHQ/shellforge/internal/ollama"
 "github.com/AgentGuardHQ/shellforge/internal/ralph"
+"github.com/AgentGuardHQ/shellforge/internal/preflight"
 "github.com/AgentGuardHQ/shellforge/internal/repl"
 "github.com/AgentGuardHQ/shellforge/internal/scheduler"
 )
@@ -597,6 +598,16 @@ func cmdRun(driver, prompt string) {
 	// Log the run
 	ts := time.Now().Format(time.RFC3339)
 	fmt.Printf("[shellforge] %s — driver=%s prompt=%q\n", ts, driver, prompt)
+
+	// Inject Preflight design-before-you-build protocol for Goose agents.
+	if driver == "goose" {
+		cwd, _ := os.Getwd()
+		if err := preflight.InjectGooseHints(cwd); err != nil {
+			fmt.Fprintf(os.Stderr, "WARNING: could not inject Preflight hints: %v\n", err)
+		} else {
+			fmt.Println("[shellforge] preflight: Preflight protocol active in .goosehints")
+		}
+	}
 
 	// Spawn driver as subprocess with passthrough I/O
 	cmd := exec.Command(dc.binary, args...)
