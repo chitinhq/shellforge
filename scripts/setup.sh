@@ -287,7 +287,9 @@ else
     # Native Linux
     ans=$(ask "Install OpenShell? (kernel-level agent sandboxing)" "n")
     if [[ "$ans" == "y" ]]; then
-      if [[ "$(uname -r | cut -d. -f1-2)" < "5.13" ]]; then
+      _kver=$(uname -r | cut -d. -f1-2)
+      _kmaj=${_kver%%.*}; _kmin=${_kver##*.}
+      if (( _kmaj < 5 || (_kmaj == 5 && _kmin < 13) )); then
         warn "Kernel $(uname -r) — Landlock needs >= 5.13"
       fi
       info "Installing OpenShell..."
