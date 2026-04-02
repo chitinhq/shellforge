@@ -35,6 +35,7 @@ type ServeConfig struct {
 	MaxParallel int           `yaml:"max_parallel"` // 0 = auto-detect
 	LogDir      string        `yaml:"log_dir"`
 	ModelRAM    int           `yaml:"model_ram_gb"` // estimated model RAM in GB, default 19
+	Inference   string        `yaml:"inference"`    // "remote" disables RAM-based concurrency detection
 	Agents      []AgentConfig `yaml:"agents"`
 }
 
@@ -132,7 +133,14 @@ func detectTotalRAM() uint64 {
 func New(cfg *ServeConfig, run RunFunc) *Scheduler {
 	maxP := cfg.MaxParallel
 	if maxP <= 0 {
-		maxP = DetectMaxParallel(cfg.ModelRAM)
+		if cfg.Inference == "remote" {
+			// Remote inference: GPU VRAM is the bottleneck, not local RAM.
+			// Default to 4 concurrent slots; user can override via max_parallel.
+			maxP = 4
+			fmt.Println("[scheduler] inference=remote — max_parallel=4 (GPU-bound, not RAM-bound)")
+		} else {
+			maxP = DetectMaxParallel(cfg.ModelRAM)
+		}
 	}
 	os.MkdirAll(cfg.LogDir, 0o755)
 	return &Scheduler{

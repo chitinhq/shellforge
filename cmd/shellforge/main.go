@@ -25,7 +25,7 @@ import (
 "github.com/AgentGuardHQ/shellforge/internal/scheduler"
 )
 
-var version = "0.4.8"
+var version = "dev"
 
 func main() {
 if len(os.Args) < 2 {
@@ -147,13 +147,35 @@ total := 6
 // ── Detect environment ──
 isServer := !hasGPU() && runtime.GOOS == "linux"
 model := ""
+remoteOllamaHost := "" // set if user configures a remote Ollama endpoint
 
-// ── Step 1: Ollama (skip on headless server) ──
+// ── Step 1: Ollama (local install or remote endpoint) ──
 steps++
 if isServer {
-fmt.Printf("── Step %d/%d: Ollama (skipped — server mode) ──\n", steps, total)
-fmt.Println("  Detected: Linux, no GPU — skipping local model setup")
-fmt.Println("  Use CLI drivers instead: shellforge run claude, copilot, codex, gemini")
+fmt.Printf("── Step %d/%d: Ollama ──\n", steps, total)
+fmt.Println("  Detected: Linux, no GPU")
+fmt.Println("  Options:")
+fmt.Println("    1) Configure remote Ollama endpoint (OLLAMA_HOST)")
+fmt.Println("    2) Use API drivers only (Claude, Copilot, Codex, Gemini)")
+fmt.Print("  Pick [2]: ")
+serverChoice := readLine(reader)
+if strings.TrimSpace(serverChoice) == "1" {
+fmt.Print("  Remote Ollama URL [http://localhost:11434]: ")
+hostInput := strings.TrimSpace(readLine(reader))
+if hostInput == "" {
+hostInput = "http://localhost:11434"
+}
+remoteOllamaHost = hostInput
+fmt.Printf("  → OLLAMA_HOST=%s\n", remoteOllamaHost)
+if ollama.IsRunning() {
+fmt.Printf("  ✓ Ollama reachable at %s\n", remoteOllamaHost)
+} else {
+fmt.Printf("  ⚠ Ollama not reachable at %s — verify it is running\n", remoteOllamaHost)
+}
+fmt.Printf("  Tip: export OLLAMA_HOST=%s\n", remoteOllamaHost)
+} else {
+fmt.Println("  Skipping Ollama — use CLI drivers: shellforge run claude, copilot, codex, gemini")
+}
 fmt.Println()
 } else {
 fmt.Printf("── Step %d/%d: Ollama (local LLM inference) ──\n", steps, total)
@@ -296,10 +318,9 @@ fmt.Println()
 steps++
 fmt.Printf("── Step %d/%d: Agent drivers ──\n", steps, total)
 
-// On Mac/GPU: offer Goose (local models via Ollama). On server: skip, show API drivers.
-if !isServer {
+// Offer Goose on all platforms — it runs headlessly and works with remote Ollama.
 if _, err := exec.LookPath("goose"); err != nil {
-fmt.Println("  Goose — AI agent with native Ollama support (actually executes tools)")
+fmt.Println("  Goose — AI agent with native Ollama support (works headlessly)")
 fmt.Print("  Install Goose? [Y/n] ")
 if confirm(reader) {
 fmt.Println("  → Installing Goose...")
@@ -310,14 +331,17 @@ run("sh", "-c", "curl -fsSL https://github.com/block/goose/releases/download/sta
 }
 if _, err := exec.LookPath("goose"); err == nil {
 fmt.Println("  ✓ Goose installed")
+if remoteOllamaHost != "" {
+fmt.Printf("  → Run 'goose configure' and set Ollama host to %s\n", remoteOllamaHost)
+} else {
 fmt.Println("  → Run 'goose configure' to set up Ollama provider")
+}
 } else {
 fmt.Println("  ⚠ Install failed — try: brew install --cask block-goose")
 }
 }
 } else {
-fmt.Println("  ✓ Goose installed (local model driver)")
-}
+fmt.Println("  ✓ Goose installed")
 }
 
 // Show API-based drivers
@@ -393,14 +417,22 @@ fmt.Println("║     Setup Complete                   ║")
 fmt.Println("╚══════════════════════════════════════╝")
 fmt.Println()
 if isServer {
+if remoteOllamaHost != "" {
+fmt.Println("  Server mode — remote Ollama configured:")
+fmt.Printf("    export OLLAMA_HOST=%s\n", remoteOllamaHost)
+fmt.Println("    shellforge run goose \"describe this project\"")
+fmt.Println("    shellforge serve agents.yaml")
+fmt.Println()
+fmt.Println("  Or use CLI drivers:")
+} else {
 fmt.Println("  Server mode — use CLI drivers:")
+}
 fmt.Println("    shellforge run claude \"review open PRs\"")
 fmt.Println("    shellforge run copilot \"update docs\"")
 fmt.Println("    shellforge run codex \"generate tests\"")
 fmt.Println()
 fmt.Println("  Run a swarm:")
-fmt.Println("    shellforge swarm                      # start Dagu dashboard")
-fmt.Println("    dagu start dags/multi-driver-swarm.yaml")
+fmt.Println("    shellforge swarm                      # start Octi Pulpo dashboard")
 } else {
 fmt.Println("  Quick start:")
 fmt.Println("    shellforge run goose \"describe this project\"")
@@ -1060,7 +1092,12 @@ return eng
 
 func mustOllama() {
 if !ollama.IsRunning() {
+if strings.HasPrefix(ollama.Host, "http://localhost") || strings.HasPrefix(ollama.Host, "http://127.") {
 fmt.Fprintln(os.Stderr, "ERROR: Ollama not running. Start: ollama serve")
+} else {
+fmt.Fprintf(os.Stderr, "ERROR: Ollama not reachable at %s\n", ollama.Host)
+fmt.Fprintln(os.Stderr, "  Check that the remote Ollama server is running and accessible.")
+}
 os.Exit(1)
 }
 }

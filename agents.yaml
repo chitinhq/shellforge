@@ -5,6 +5,7 @@
 max_parallel: 0  # 0 = auto-detect from available RAM
 log_dir: outputs/logs
 model_ram_gb: 19 # qwen3:30b Q4_K_M — adjust for your model
+# inference: remote  # uncomment for remote Ollama (RunPod/GPU server) — disables RAM-based concurrency
 
 agents:
   - name: qa-agent
