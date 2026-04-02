@@ -1,12 +1,14 @@
 // Package scheduler provides a priority-aware inference queue with
-// semaphore-based concurrency control. This prevents local model
-// overload by limiting parallel inference slots and rejecting
-// requests when the queue depth is exceeded.
+// concurrency control. This prevents local model overload by limiting
+// parallel inference slots. Requests are dispatched in descending
+// Priority order; within the same priority they are served FIFO.
 package scheduler
 
 import (
+	"container/heap"
 	"context"
 	"fmt"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -41,55 +43,141 @@ type InferenceResult struct {
 	Tokens int
 }
 
-// InferenceQueue manages concurrent access to local model inference.
-// It uses a buffered channel as a semaphore to limit parallelism and
-// an atomic counter to enforce maximum queue depth.
-type InferenceQueue struct {
-	slots    chan struct{}
-	maxDepth int
-	pending  int64 // atomic counter
+// waitEntry holds a pending Submit() call in the priority heap.
+type waitEntry struct {
+	req   InferenceRequest
+	grant chan struct{} // closed when a slot is granted to this entry
+	seq   int64        // insertion order for FIFO tie-breaking within equal priority
+	index int          // position in heap; -1 once removed or dispatched
 }
 
-// NewInferenceQueue creates a queue that allows maxParallel concurrent
-// inference calls and rejects submissions when maxDepth requests are
-// already waiting.
-func NewInferenceQueue(maxParallel, maxDepth int) *InferenceQueue {
-	return &InferenceQueue{
-		slots:    make(chan struct{}, maxParallel),
-		maxDepth: maxDepth,
+// requestHeap is a max-heap over *waitEntry ordered by Priority (descending),
+// then by seq (ascending, i.e. FIFO within equal priority).
+type requestHeap []*waitEntry
+
+func (h requestHeap) Len() int { return len(h) }
+
+func (h requestHeap) Less(i, j int) bool {
+	if h[i].req.Priority != h[j].req.Priority {
+		return h[i].req.Priority > h[j].req.Priority
 	}
+	return h[i].seq < h[j].seq
 }
 
-// Submit attempts to acquire an inference slot. It blocks until a slot
-// is available or the context is cancelled. Returns an error if the
-// queue depth limit is exceeded or the context expires.
-func (q *InferenceQueue) Submit(ctx context.Context, req InferenceRequest) error {
+func (h requestHeap) Swap(i, j int) {
+	h[i], h[j] = h[j], h[i]
+	h[i].index = i
+	h[j].index = j
+}
+
+func (h *requestHeap) Push(x any) {
+	e := x.(*waitEntry)
+	e.index = len(*h)
+	*h = append(*h, e)
+}
+
+func (h *requestHeap) Pop() any {
+	old := *h
+	n := len(old)
+	e := old[n-1]
+	old[n-1] = nil
+	*h = old[:n-1]
+	e.index = -1
+	return e
+}
+
+// InferenceQueue manages concurrent access to local model inference.
+// Requests wait in a max-priority heap and are dispatched in Priority
+// order (higher values first). Within the same priority, requests are
+// served FIFO.
+type InferenceQueue struct {
+	mu          sync.Mutex
+	waiting     requestHeap
+	maxParallel int
+	running     int
+	maxDepth    int
+	pending     int64 // atomic: waiting + running
+	seq         int64 // monotonic insertion counter
+}
+
+// NewInferenceQueue creates a queue that dispatches up to maxParallel
+// concurrent inference calls and rejects new submissions when maxDepth
+// requests are already pending (waiting + running).
+func NewInferenceQueue(maxParallel, maxDepth int) *InferenceQueue {
+	q := &InferenceQueue{
+		maxParallel: maxParallel,
+		maxDepth:    maxDepth,
+	}
+	heap.Init(&q.waiting)
+	return q
+}
+
+// Submit enqueues req and blocks until a slot is granted or ctx is
+// cancelled. On success it returns a release function that the caller
+// MUST invoke once inference is complete to free the slot.
+func (q *InferenceQueue) Submit(ctx context.Context, req InferenceRequest) (func(), error) {
 	if int(atomic.LoadInt64(&q.pending)) >= q.maxDepth {
-		return fmt.Errorf("inference queue full (%d pending)", q.maxDepth)
+		return nil, fmt.Errorf("inference queue full (%d pending)", q.maxDepth)
 	}
 	atomic.AddInt64(&q.pending, 1)
-	defer atomic.AddInt64(&q.pending, -1)
 
-	// Acquire slot (blocks until available or context cancelled)
-	select {
-	case q.slots <- struct{}{}:
-	case <-ctx.Done():
-		return ctx.Err()
+	entry := &waitEntry{
+		req:   req,
+		grant: make(chan struct{}),
+		seq:   atomic.AddInt64(&q.seq, 1),
 	}
-	defer func() { <-q.slots }()
 
-	// Slot acquired — the caller's runFunc handles actual inference.
-	// This method only manages concurrency; execution is delegated
-	// to the orchestrator that owns this queue.
-	return nil
+	q.mu.Lock()
+	heap.Push(&q.waiting, entry)
+	q.tryDispatch()
+	q.mu.Unlock()
+
+	select {
+	case <-entry.grant:
+		return func() {
+			atomic.AddInt64(&q.pending, -1)
+			q.mu.Lock()
+			q.running--
+			q.tryDispatch()
+			q.mu.Unlock()
+		}, nil
+
+	case <-ctx.Done():
+		q.mu.Lock()
+		if entry.index >= 0 {
+			// Still in heap — remove cleanly before it is dispatched.
+			heap.Remove(&q.waiting, entry.index)
+			q.mu.Unlock()
+			atomic.AddInt64(&q.pending, -1)
+			return nil, ctx.Err()
+		}
+		// index == -1: tryDispatch already popped this entry and incremented
+		// q.running. Release the slot immediately since we won't use it.
+		q.running--
+		q.tryDispatch()
+		q.mu.Unlock()
+		atomic.AddInt64(&q.pending, -1)
+		return nil, ctx.Err()
+	}
 }
 
-// Pending returns the current number of queued inference requests.
+// tryDispatch grants slots to the highest-priority waiting entries until
+// maxParallel is reached or the heap is empty. Must be called with q.mu held.
+func (q *InferenceQueue) tryDispatch() {
+	for q.running < q.maxParallel && len(q.waiting) > 0 {
+		entry := heap.Pop(&q.waiting).(*waitEntry)
+		q.running++
+		close(entry.grant)
+	}
+}
+
+// Pending returns the current number of pending inference requests
+// (both waiting for a slot and currently running).
 func (q *InferenceQueue) Pending() int64 {
 	return atomic.LoadInt64(&q.pending)
 }
 
 // MaxParallel returns the concurrency limit for this queue.
 func (q *InferenceQueue) MaxParallel() int {
-	return cap(q.slots)
+	return q.maxParallel
 }
