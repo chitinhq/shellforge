@@ -415,6 +415,109 @@ func TestGrep_RecursiveSearch(t *testing.T) {
 	}
 }
 
+// ── listFiles tests ──
+
+func TestListFiles_PathsRelativeToDirectory(t *testing.T) {
+	dir := t.TempDir()
+	sub := filepath.Join(dir, "sub")
+	os.MkdirAll(sub, 0o755)
+	os.WriteFile(filepath.Join(dir, "a.go"), []byte(""), 0o644)
+	os.WriteFile(filepath.Join(sub, "b.go"), []byte(""), 0o644)
+
+	r := listFiles(map[string]string{"directory": dir}, 0)
+
+	if !r.Success {
+		t.Fatalf("expected success, got error: %s", r.Error)
+	}
+	// Paths must be relative to dir, not cwd
+	for _, line := range strings.Split(r.Output, "\n") {
+		if strings.HasPrefix(line, dir) {
+			t.Fatalf("got absolute path %q — expected relative to listed dir", line)
+		}
+	}
+	if !strings.Contains(r.Output, "a.go") {
+		t.Fatalf("expected a.go in output, got: %s", r.Output)
+	}
+	if !strings.Contains(r.Output, "sub/") || !strings.Contains(r.Output, "b.go") {
+		t.Fatalf("expected sub/ and b.go in output, got: %s", r.Output)
+	}
+}
+
+func TestListFiles_NoDoublePrefix(t *testing.T) {
+	// Regression test: when dir is a subdirectory, paths must not include the
+	// directory prefix (e.g. listing "internal/tools" must return "tools.go"
+	// not "internal/tools/tools.go").
+	dir := t.TempDir()
+	sub := filepath.Join(dir, "internal", "tools")
+	os.MkdirAll(sub, 0o755)
+	os.WriteFile(filepath.Join(sub, "tools.go"), []byte(""), 0o644)
+
+	r := listFiles(map[string]string{"directory": sub}, 0)
+
+	if !r.Success {
+		t.Fatalf("expected success, got error: %s", r.Error)
+	}
+	if !strings.Contains(r.Output, "tools.go") {
+		t.Fatalf("expected tools.go, got: %s", r.Output)
+	}
+	// Must NOT contain the sub-path prefix
+	if strings.Contains(r.Output, "internal") {
+		t.Fatalf("path should be relative to queried dir, not contain parent: %s", r.Output)
+	}
+}
+
+func TestListFiles_ExtensionFilter(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "a.go"), []byte(""), 0o644)
+	os.WriteFile(filepath.Join(dir, "b.txt"), []byte(""), 0o644)
+
+	r := listFiles(map[string]string{"directory": dir, "extension": ".go"}, 0)
+
+	if !r.Success {
+		t.Fatalf("expected success, got error: %s", r.Error)
+	}
+	if !strings.Contains(r.Output, "a.go") {
+		t.Fatalf("expected a.go, got: %s", r.Output)
+	}
+	if strings.Contains(r.Output, "b.txt") {
+		t.Fatalf("should not include b.txt, got: %s", r.Output)
+	}
+}
+
+func TestListFiles_EmptyDir(t *testing.T) {
+	dir := t.TempDir()
+
+	r := listFiles(map[string]string{"directory": dir}, 0)
+
+	if !r.Success {
+		t.Fatalf("expected success, got error: %s", r.Error)
+	}
+	if r.Output != "(empty directory)" {
+		t.Fatalf("expected '(empty directory)', got: %s", r.Output)
+	}
+}
+
+func TestListFiles_SkipsHiddenAndNodeModules(t *testing.T) {
+	dir := t.TempDir()
+	os.MkdirAll(filepath.Join(dir, ".git"), 0o755)
+	os.MkdirAll(filepath.Join(dir, "node_modules"), 0o755)
+	os.WriteFile(filepath.Join(dir, ".git", "config"), []byte(""), 0o644)
+	os.WriteFile(filepath.Join(dir, "node_modules", "pkg.js"), []byte(""), 0o644)
+	os.WriteFile(filepath.Join(dir, "main.go"), []byte(""), 0o644)
+
+	r := listFiles(map[string]string{"directory": dir}, 0)
+
+	if !r.Success {
+		t.Fatalf("expected success, got error: %s", r.Error)
+	}
+	if strings.Contains(r.Output, ".git") || strings.Contains(r.Output, "node_modules") {
+		t.Fatalf("should skip hidden dirs, got: %s", r.Output)
+	}
+	if !strings.Contains(r.Output, "main.go") {
+		t.Fatalf("expected main.go, got: %s", r.Output)
+	}
+}
+
 // ── ExecuteDirect dispatch tests ──
 
 func TestExecuteDirect_UnknownTool(t *testing.T) {

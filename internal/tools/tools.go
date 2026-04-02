@@ -210,7 +210,10 @@ return fmt.Errorf("limit reached")
 if ext != "" && filepath.Ext(name) != ext {
 return nil
 }
-rel, _ := filepath.Rel(".", path)
+rel, _ := filepath.Rel(dir, path)
+if rel == "." {
+return nil // skip the root directory entry itself
+}
 if d.IsDir() {
 files = append(files, rel+"/")
 } else {
