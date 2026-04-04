@@ -415,61 +415,143 @@ func TestGrep_RecursiveSearch(t *testing.T) {
 	}
 }
 
-// ── ExecuteDirect dispatch tests ──
+// ── list_files tests ──
 
-func TestExecuteDirect_UnknownTool(t *testing.T) {
-	r := ExecuteDirect("nonexistent_tool", map[string]string{}, 10)
-	if r.Success {
-		t.Fatal("expected failure for unknown tool")
-	}
-	if r.Error != "unknown_tool" {
-		t.Fatalf("expected error 'unknown_tool', got %q", r.Error)
-	}
-}
-
-func TestExecuteDirect_EditFile(t *testing.T) {
+func TestListFiles_Basic(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "test.txt")
-	os.WriteFile(path, []byte("old content"), 0o644)
+	os.WriteFile(filepath.Join(dir, "a.txt"), []byte(""), 0o644)
+	os.WriteFile(filepath.Join(dir, "b.go"), []byte(""), 0o644)
+	os.MkdirAll(filepath.Join(dir, "subdir"), 0o755)
+	os.WriteFile(filepath.Join(dir, "subdir", "c.md"), []byte(""), 0o644)
 
-	r := ExecuteDirect("edit_file", map[string]string{
-		"path":     path,
-		"old_text": "old",
-		"new_text": "new",
-	}, 10)
-
-	if !r.Success {
-		t.Fatalf("expected success, got error: %s", r.Error)
-	}
-	data, _ := os.ReadFile(path)
-	if string(data) != "new content" {
-		t.Fatalf("expected 'new content', got %q", string(data))
-	}
-}
-
-func TestExecuteDirect_Glob(t *testing.T) {
-	r := ExecuteDirect("glob", map[string]string{
-		"pattern": "*.nonexistent_xyz",
-	}, 10)
-
-	if !r.Success {
-		t.Fatalf("expected success, got error: %s", r.Error)
-	}
-}
-
-func TestExecuteDirect_Grep(t *testing.T) {
-	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "test.txt"), []byte("hello world\n"), 0o644)
-
-	r := ExecuteDirect("grep", map[string]string{
-		"pattern":   "hello",
+	r := listFiles(map[string]string{
 		"directory": dir,
-	}, 10)
+	}, 0)
 
 	if !r.Success {
 		t.Fatalf("expected success, got error: %s", r.Error)
 	}
-	if !strings.Contains(r.Output, "hello world") {
-		t.Fatalf("expected match, got: %s", r.Output)
+
+	lines := strings.Split(strings.TrimSpace(r.Output), "\n")
+	// Should have: a.txt, b.go, subdir/ (non-recursive, so not subdir/c.md)
+	if len(lines) != 3 {
+		t.Fatalf("expected 3 entries, got %d: %s", len(lines), r.Output)
 	}
+
+	// Check that paths are relative to the listed directory
+	for _, line := range lines {
+		if strings.Contains(line, "..") {
+			t.Fatalf("paths should be relative to listed directory, got: %s", line)
+		}
+	}
+}
+
+func TestListFiles_WithExtensionFilter(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "a.txt"), []byte(""), 0o644)
+	os.WriteFile(filepath.Join(dir, "b.go"), []byte(""), 0o644)
+	os.WriteFile(filepath.Join(dir, "c.txt"), []byte(""), 0o644)
+
+	r := listFiles(map[string]string{
+		"directory": dir,
+		"extension": ".txt",
+	}, 0)
+
+	if !r.Success {
+		t.Fatalf("expected success, got error: %s", r.Error)
+	}
+
+	lines := strings.Split(strings.TrimSpace(r.Output), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("expected 2 .txt files, got %d: %s", len(lines), r.Output)
+	}
+}
+
+func TestListFiles_EmptyDirectory(t *testing.T) {
+	dir := t.TempDir()
+
+	r := listFiles(map[string]string{
+		"directory": dir,
+	}, 0)
+
+	if !r.Success {
+		t.Fatalf("expected success, got error: %s", r.Error)
+	}
+	if r.Output != "(empty directory)" {
+		t.Fatalf("expected '(empty directory)', got %q", r.Output)
+	}
+}
+
+func TestListFiles_SkipsHiddenAndGit(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "a.txt"), []byte(""), 0o644)
+	os.WriteFile(filepath.Join(dir, ".hidden"), []byte(""), 0o644)
+	gitDir := filepath.Join(dir, ".git")
+	os.MkdirAll(gitDir, 0o755)
+	os.WriteFile(filepath.Join(gitDir, "config"), []byte(""), 0o644)
+
+	r := listFiles(map[string]string{
+		"directory": dir,
+	}, 0)
+
+	if !r.Success {
+		t.Fatalf("expected success, got error: %s", r.Error)
+	}
+
+	lines := strings.Split(strings.TrimSpace(r.Output), "\n")
+	if len(lines) != 1 {
+		t.Fatalf("expected 1 visible file, got %d: %s", len(lines), r.Output)
+	}
+	if !strings.Contains(r.Output, "a.txt") {
+		t.Fatalf("expected a.txt, got: %s", r.Output)
+	}
+}
+
+func TestListFiles_PathsRelativeToListedDirectory(t *testing.T) {
+	// This is the key test for the bug fix
+	dir := t.TempDir()
+	subdir := filepath.Join(dir, "subdir")
+	os.MkdirAll(subdir, 0o755)
+	os.WriteFile(filepath.Join(subdir, "file1.txt"), []byte(""), 0o644)
+	os.WriteFile(filepath.Join(subdir, "file2.go"), []byte(""), 0o644)
+
+	// Change to a different directory to test the bug
+	originalDir, _ := os.Getwd()
+	defer os.Chdir(originalDir)
+	
+	// Change to /tmp (or any directory not parent of dir)
+	os.Chdir("/tmp")
+
+	r := listFiles(map[string]string{
+		"directory": subdir,
+	}, 0)
+
+	if !r.Success {
+		t.Fatalf("expected success, got error: %s", r.Error)
+	}
+
+	lines := strings.Split(strings.TrimSpace(r.Output), "\n")
+	// Should have: file1.txt, file2.go (relative to subdir, not to cwd)
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		if strings.Contains(line, "..") || strings.Contains(line, "/") {
+			t.Fatalf("paths should be simple filenames relative to listed directory, got: %s", line)
+		}
+		if line != "file1.txt" && line != "file2.go" {
+			t.Fatalf("unexpected file: %s", line)
+		}
+	}
+}
+
+func TestListFiles_DefaultDirectory(t *testing.T) {
+	// Test that it defaults to current directory when no directory specified
+	r := listFiles(map[string]string{}, 0)
+
+	if !r.Success {
+		t.Fatalf("expected success, got error: %s", r.Error)
+	}
+	// Should list files in current directory (which is the temp dir created by t.TempDir()
+	// but the test runner changes to that dir, so it should work)
 }

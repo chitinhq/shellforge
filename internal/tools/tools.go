@@ -193,33 +193,26 @@ dir = "."
 }
 ext := params["extension"]
 var files []string
-err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
-if err != nil {
-return nil
-}
-name := d.Name()
-if name == "node_modules" || name == ".git" || strings.HasPrefix(name, ".") {
-if d.IsDir() {
-return filepath.SkipDir
-}
-return nil
-}
-if len(files) > 200 {
-return fmt.Errorf("limit reached")
-}
-if ext != "" && filepath.Ext(name) != ext {
-return nil
-}
-rel, _ := filepath.Rel(".", path)
-if d.IsDir() {
-files = append(files, rel+"/")
-} else {
-files = append(files, rel)
-}
-return nil
-})
+entries, err := os.ReadDir(dir)
 if err != nil {
 return Result{Success: false, Output: err.Error(), Error: "list_error"}
+}
+for _, d := range entries {
+name := d.Name()
+if name == "node_modules" || name == ".git" || strings.HasPrefix(name, ".") {
+continue
+}
+if ext != "" && filepath.Ext(name) != ext {
+continue
+}
+if d.IsDir() {
+files = append(files, name+"/")
+} else {
+files = append(files, name)
+}
+if len(files) > 200 {
+break
+}
 }
 if len(files) == 0 {
 return Result{Success: true, Output: "(empty directory)"}
