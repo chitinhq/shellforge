@@ -287,7 +287,34 @@ else
     # Native Linux
     ans=$(ask "Install OpenShell? (kernel-level agent sandboxing)" "n")
     if [[ "$ans" == "y" ]]; then
-      if [[ "$(uname -r | cut -d. -f1-2)" < "5.13" ]]; then
+      # Function to compare kernel versions numerically
+      compare_kernel_versions() {
+        local v1="$1"
+        local v2="$2"
+        
+        # Extract major and minor versions
+        local v1_major=$(echo "$v1" | cut -d. -f1)
+        local v1_minor=$(echo "$v1" | cut -d. -f2)
+        local v2_major=$(echo "$v2" | cut -d. -f1)
+        local v2_minor=$(echo "$v2" | cut -d. -f2)
+        
+        # Compare major version first, then minor
+        if [[ "$v1_major" -lt "$v2_major" ]]; then
+          return 0  # true: v1 < v2
+        elif [[ "$v1_major" -gt "$v2_major" ]]; then
+          return 1  # false: v1 > v2
+        else
+          # Same major version, compare minor
+          if [[ "$v1_minor" -lt "$v2_minor" ]]; then
+            return 0  # true: v1 < v2
+          else
+            return 1  # false: v1 >= v2
+          fi
+        fi
+      }
+      
+      kernel_version=$(uname -r | cut -d. -f1-2)
+      if compare_kernel_versions "$kernel_version" "5.13"; then
         warn "Kernel $(uname -r) — Landlock needs >= 5.13"
       fi
       info "Installing OpenShell..."
