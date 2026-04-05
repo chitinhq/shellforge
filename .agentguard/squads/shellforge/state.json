@@ -101,10 +101,10 @@
     "Dogfood (#76): 4th escalation — all governance P0/P1 fixed, needs human to trigger."
   ],
   "human_escalations": [
-    { "priority": "P1", "title": "Review PR #93 — fix run() silent errors (closes #51, CI green)", "url": "https://github.com/AgentGuardHQ/shellforge/pull/93" },
-    { "priority": "P1", "title": "Review PR #94 — EM state run 9 (CI green, state update only)", "url": "https://github.com/AgentGuardHQ/shellforge/pull/94" },
-    { "priority": "P2", "title": "Review PR #95 — fix scheduler WriteFile error (closes #65, governance audit)", "url": "https://github.com/AgentGuardHQ/shellforge/pull/95" },
-    { "priority": "P2", "title": "Trigger dogfood run (#76) — 4th escalation, all blockers resolved", "url": "https://github.com/AgentGuardHQ/shellforge/issues/76" }
+    { "priority": "P1", "title": "Review PR #93 — fix run() silent errors (closes #51, CI green)", "url": "https://github.com/chitinhq/shellforge/pull/93" },
+    { "priority": "P1", "title": "Review PR #94 — EM state run 9 (CI green, state update only)", "url": "https://github.com/chitinhq/shellforge/pull/94" },
+    { "priority": "P2", "title": "Review PR #95 — fix scheduler WriteFile error (closes #65, governance audit)", "url": "https://github.com/chitinhq/shellforge/pull/95" },
+    { "priority": "P2", "title": "Trigger dogfood run (#76) — 4th escalation, all blockers resolved", "url": "https://github.com/chitinhq/shellforge/issues/76" }
   ],
   "notes": "Run 10 (2026-03-31): Closed stale PR #91 (DIRTY merge conflict, superseded by #94). Fixed #65 (scheduler.go os.WriteFile error discarded) in PR #95. PR budget now 3/3 — at limit. Queue blocked on human review of #93 and #94 (both CI green). Next priority: #52 (filepath.WalkDir fix) when budget clears."
 }

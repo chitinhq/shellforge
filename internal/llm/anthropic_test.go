@@ -5,7 +5,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
 // newAnthropicTestProvider creates an AnthropicProvider pointing at the given mock server URL.
@@ -325,4 +327,74 @@ func TestAnthropicChat_CacheMetrics(t *testing.T) {
 
 func TestAnthropicProviderImplementsProvider(t *testing.T) {
 	var _ Provider = (*AnthropicProvider)(nil)
+}
+
+// ---------------------------------------------------------------------------
+// Test 7: 429 retry — success on second attempt
+// ---------------------------------------------------------------------------
+
+func TestAnthropicChat429Retry(t *testing.T) {
+	origConfig := DefaultRetryConfig
+	DefaultRetryConfig = RetryConfig{MaxAttempts: 3, BaseDelay: time.Millisecond, MaxDelay: 10 * time.Millisecond}
+	defer func() { DefaultRetryConfig = origConfig }()
+
+	var calls int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		n := atomic.AddInt32(&calls, 1)
+		if n == 1 {
+			w.Header().Set("Retry-After", "0")
+			w.WriteHeader(http.StatusTooManyRequests)
+			w.Write([]byte(`{"type":"error","error":{"type":"rate_limit_error","message":"rate limited"}}`))
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		resp := anthropicResponse{
+			ID:         "msg_retry",
+			Content:    []anthropicContentBlock{{Type: "text", Text: "retried ok"}},
+			StopReason: "end_turn",
+		}
+		resp.Usage.InputTokens = 5
+		resp.Usage.OutputTokens = 2
+		w.Write(mustMarshal(resp))
+	}))
+	defer srv.Close()
+
+	p := newAnthropicTestProvider(srv.URL)
+	resp, err := p.Chat([]Message{{Role: "user", Content: "hi"}}, nil)
+	if err != nil {
+		t.Fatalf("Chat() should have succeeded after retry, got: %v", err)
+	}
+	if resp.Content != "retried ok" {
+		t.Errorf("Content = %q, want %q", resp.Content, "retried ok")
+	}
+	if atomic.LoadInt32(&calls) != 2 {
+		t.Errorf("calls = %d, want 2 (1 fail + 1 success)", atomic.LoadInt32(&calls))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Test 8: 401 fatal — no retry
+// ---------------------------------------------------------------------------
+
+func TestAnthropicChat401NoRetry(t *testing.T) {
+	origConfig := DefaultRetryConfig
+	DefaultRetryConfig = RetryConfig{MaxAttempts: 3, BaseDelay: time.Millisecond, MaxDelay: 10 * time.Millisecond}
+	defer func() { DefaultRetryConfig = origConfig }()
+
+	var calls int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&calls, 1)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"type":"error","error":{"type":"authentication_error","message":"invalid api key"}}`))
+	}))
+	defer srv.Close()
+
+	p := newAnthropicTestProvider(srv.URL)
+	_, err := p.Chat([]Message{{Role: "user", Content: "hi"}}, nil)
+	if err == nil {
+		t.Fatal("Chat() should have returned error for 401")
+	}
+	if atomic.LoadInt32(&calls) != 1 {
+		t.Errorf("calls = %d, want 1 (no retry on 401)", atomic.LoadInt32(&calls))
+	}
 }

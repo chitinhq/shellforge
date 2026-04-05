@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -203,37 +204,53 @@ func (a *AnthropicProvider) Chat(messages []Message, tools []ToolDef) (*Response
 		return nil, fmt.Errorf("anthropic: marshal request: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, a.baseURL+"/v1/messages", bytes.NewReader(bodyBytes))
-	if err != nil {
-		return nil, fmt.Errorf("anthropic: create request: %w", err)
-	}
-	req.Header.Set("x-api-key", a.apiKey)
-	req.Header.Set("anthropic-version", anthropicVersion)
-	req.Header.Set("anthropic-beta", "prompt-caching-2024-07-31")
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := a.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("anthropic: http request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("anthropic: read response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		var apiErr anthropicErrorResponse
-		if jsonErr := json.Unmarshal(respBytes, &apiErr); jsonErr == nil && apiErr.Error.Message != "" {
-			return nil, fmt.Errorf("anthropic: api error %d: %s", resp.StatusCode, apiErr.Error.Message)
-		}
-		return nil, fmt.Errorf("anthropic: http %d: %s", resp.StatusCode, string(respBytes))
-	}
-
 	var apiResp anthropicResponse
-	if err := json.Unmarshal(respBytes, &apiResp); err != nil {
-		return nil, fmt.Errorf("anthropic: unmarshal response: %w", err)
+	doRequest := func() error {
+		httpReq, cloneErr := http.NewRequest(http.MethodPost, a.baseURL+"/v1/messages", bytes.NewReader(bodyBytes))
+		if cloneErr != nil {
+			return fmt.Errorf("anthropic: create request: %w", cloneErr)
+		}
+		httpReq.Header.Set("x-api-key", a.apiKey)
+		httpReq.Header.Set("anthropic-version", anthropicVersion)
+		httpReq.Header.Set("anthropic-beta", "prompt-caching-2024-07-31")
+		httpReq.Header.Set("Content-Type", "application/json")
+
+		resp, err := a.client.Do(httpReq)
+		if err != nil {
+			return &ProviderError{Provider: "anthropic", Message: "network error", Wrapped: err}
+		}
+		defer resp.Body.Close()
+
+		respBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return &ProviderError{Provider: "anthropic", Message: "read response", Wrapped: err}
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			pe := &ProviderError{Provider: "anthropic", StatusCode: resp.StatusCode}
+			var apiErr anthropicErrorResponse
+			if jsonErr := json.Unmarshal(respBytes, &apiErr); jsonErr == nil && apiErr.Error.Message != "" {
+				pe.Message = apiErr.Error.Message
+				pe.ErrorType = apiErr.Error.Type
+			} else {
+				pe.Message = string(respBytes)
+			}
+			if ra := resp.Header.Get("Retry-After"); ra != "" {
+				if secs, err := strconv.Atoi(ra); err == nil {
+					pe.RetryAfter = time.Duration(secs) * time.Second
+				}
+			}
+			return pe
+		}
+
+		if err := json.Unmarshal(respBytes, &apiResp); err != nil {
+			return fmt.Errorf("anthropic: unmarshal response: %w", err)
+		}
+		return nil
+	}
+
+	if err := RetryDo(DefaultRetryConfig, doRequest); err != nil {
+		return nil, err
 	}
 
 	return parseResponse(&apiResp), nil

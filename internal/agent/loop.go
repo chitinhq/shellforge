@@ -17,15 +17,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AgentGuardHQ/shellforge/internal/action"
-	"github.com/AgentGuardHQ/shellforge/internal/correction"
-	"github.com/AgentGuardHQ/shellforge/internal/governance"
-	"github.com/AgentGuardHQ/shellforge/internal/intent"
-	"github.com/AgentGuardHQ/shellforge/internal/llm"
-	"github.com/AgentGuardHQ/shellforge/internal/logger"
-	"github.com/AgentGuardHQ/shellforge/internal/normalizer"
-	"github.com/AgentGuardHQ/shellforge/internal/ollama"
-	"github.com/AgentGuardHQ/shellforge/internal/tools"
+	"github.com/chitinhq/shellforge/internal/action"
+	"github.com/chitinhq/shellforge/internal/correction"
+	"github.com/chitinhq/shellforge/internal/governance"
+	"github.com/chitinhq/shellforge/internal/intent"
+	"github.com/chitinhq/shellforge/internal/llm"
+	"github.com/chitinhq/shellforge/internal/logger"
+	"github.com/chitinhq/shellforge/internal/normalizer"
+	"github.com/chitinhq/shellforge/internal/ollama"
+	"github.com/chitinhq/shellforge/internal/tools"
 )
 
 type LoopConfig struct {
@@ -103,6 +103,11 @@ func runProviderLoop(cfg LoopConfig, engine *governance.Engine, start time.Time)
 
 		provResp, perr := cfg.Provider.Chat(compacted, toolDefs)
 		if perr != nil {
+			// Retry is already handled inside the provider (RetryDo).
+			// If we get here, the error is either fatal or retries exhausted.
+			if llm.IsRetryable(perr) {
+				logger.Agent(cfg.Agent, fmt.Sprintf("retryable error (retries exhausted): %s", perr.Error()))
+			}
 			logger.Error(cfg.Agent, cfg.Provider.Name()+": "+perr.Error())
 			result.Output = "Model error: " + perr.Error()
 			result.Turns = turn
@@ -508,7 +513,11 @@ func estimateTokens(msgs []ollama.ChatMessage) int {
 	return total
 }
 
-// compactLLMMessages is the []llm.Message equivalent of compactMessages.
+// compactLLMMessages compresses conversation history to fit within token budget.
+// Strategy: keep system prompt, first user message, and last retainTurns turns.
+// Middle turns are replaced with a summary message to preserve context.
+const retainTurns = 8 // keep last N messages from the conversation
+
 func compactLLMMessages(msgs []llm.Message, budget int) []llm.Message {
 	if budget <= 0 {
 		budget = 3000
@@ -518,14 +527,51 @@ func compactLLMMessages(msgs []llm.Message, budget int) []llm.Message {
 		return msgs
 	}
 
-	result := []llm.Message{msgs[0], msgs[1]}
-	remaining := msgs[2:]
-
-	for total > budget && len(remaining) > 4 {
-		remaining = remaining[2:]
-		total = estimateLLMTokens(append(result, remaining...))
+	if len(msgs) <= 2+retainTurns {
+		// Not enough messages to compact — return as-is.
+		return msgs
 	}
-	return append(result, remaining...)
+
+	// Keep: system (0), first user (1), summary of middle, last retainTurns.
+	head := msgs[:2]
+	tail := msgs[len(msgs)-retainTurns:]
+	middle := msgs[2 : len(msgs)-retainTurns]
+
+	// Build a compact summary of dropped turns.
+	var toolNames []string
+	var denials int
+	for _, m := range middle {
+		if m.Role == "assistant" {
+			for _, tc := range m.ToolCalls {
+				toolNames = append(toolNames, tc.Name)
+			}
+		}
+		if m.Role == "tool_result" && len(m.Content) > 20 {
+			// Count denial feedback messages.
+			if len(m.Content) > 4 && m.Content[:4] == "Tool" {
+				denials++
+			}
+		}
+	}
+
+	summary := fmt.Sprintf("[Compacted %d earlier messages. Tools used: %d calls", len(middle), len(toolNames))
+	if denials > 0 {
+		summary += fmt.Sprintf(", %d denied", denials)
+	}
+	summary += ". Continuing from recent context.]"
+
+	result := make([]llm.Message, 0, 2+1+retainTurns)
+	result = append(result, head...)
+	result = append(result, llm.Message{Role: "user", Content: summary})
+	result = append(result, tail...)
+
+	// If still over budget, fall back to aggressive dropping.
+	for estimateLLMTokens(result) > budget && len(result) > 4 {
+		// Remove the oldest retained message after summary.
+		result = append(result[:3], result[4:]...)
+	}
+
+	return result
 }
 
 // estimateLLMTokens estimates token count for []llm.Message.

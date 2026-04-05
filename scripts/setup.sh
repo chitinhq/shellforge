@@ -137,7 +137,7 @@ if command -v agentguard &>/dev/null; then
   ok "AgentGuard kernel $(agentguard --version 2>/dev/null || echo 'installed')"
 elif [[ -f agentguard.yaml ]]; then
   ok "Using built-in YAML evaluator (agentguard.yaml found)"
-  info "For full kernel (blast radius, personas): go install github.com/AgentGuardHQ/agent-guard/go/cmd/agentguard@latest"
+  info "For full kernel (blast radius, personas): go install github.com/chitinhq/agent-guard/go/cmd/agentguard@latest"
 else
   warn "No agentguard.yaml found — governance disabled"
 fi

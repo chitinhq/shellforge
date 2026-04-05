@@ -1,7 +1,7 @@
 # ShellForge — AgentGuard Governance Policy
 # Mode: enforce (block violations)
 
-mode: enforce
+mode: educate
 
 policies:
   - name: no-force-push

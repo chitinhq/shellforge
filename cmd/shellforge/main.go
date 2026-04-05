@@ -16,14 +16,14 @@ import (
 "strings"
 "time"
 
-"github.com/AgentGuardHQ/shellforge/internal/agent"
-"github.com/AgentGuardHQ/shellforge/internal/governance"
-"github.com/AgentGuardHQ/shellforge/internal/llm"
-"github.com/AgentGuardHQ/shellforge/internal/logger"
-"github.com/AgentGuardHQ/shellforge/internal/ollama"
-"github.com/AgentGuardHQ/shellforge/internal/ralph"
-"github.com/AgentGuardHQ/shellforge/internal/repl"
-"github.com/AgentGuardHQ/shellforge/internal/scheduler"
+"github.com/chitinhq/shellforge/internal/agent"
+"github.com/chitinhq/shellforge/internal/governance"
+"github.com/chitinhq/shellforge/internal/llm"
+"github.com/chitinhq/shellforge/internal/logger"
+"github.com/chitinhq/shellforge/internal/ollama"
+"github.com/chitinhq/shellforge/internal/ralph"
+"github.com/chitinhq/shellforge/internal/repl"
+"github.com/chitinhq/shellforge/internal/scheduler"
 )
 
 var version = "0.4.8"

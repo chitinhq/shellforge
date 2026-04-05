@@ -14,8 +14,8 @@ import (
 // to the production-grade engine with blast radius analysis, persona-aware
 // decisions, invariant checking, and sub-millisecond evaluation.
 //
-// The kernel lives at: github.com/AgentGuardHQ/agent-guard/go
-// Install: go install github.com/AgentGuardHQ/agent-guard/go/cmd/agentguard@latest
+// The kernel lives at: github.com/chitinhq/agent-guard/go
+// Install: go install github.com/chitinhq/agent-guard/go/cmd/agentguard@latest
 //
 // Without the kernel, ShellForge uses its built-in YAML evaluator (internal/governance).
 // With the kernel, we get: deny/allow/escalate/intervene decisions, corrected commands,

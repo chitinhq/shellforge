@@ -3,7 +3,7 @@ package llm
 import (
 	"os"
 
-	"github.com/AgentGuardHQ/shellforge/internal/ollama"
+	"github.com/chitinhq/shellforge/internal/ollama"
 )
 
 // OllamaProvider wraps the existing ollama.Chat() function.

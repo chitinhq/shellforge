@@ -34,7 +34,7 @@
 **Severity:** Medium — dogfood on jared-box (headless WSL2 + RunPod GPU) blocked
 **Root cause:** `shellforge setup` detects `isServer=true` on headless Linux and skips Goose + Ollama entirely, with no option to configure `OLLAMA_HOST` for a remote GPU endpoint.
 **Fix needed:** setup.sh should offer remote Ollama config when `isServer=true` — set `OLLAMA_HOST`, skip local Ollama install, keep Goose setup.
-**URL:** https://github.com/AgentGuardHQ/shellforge/issues/76
+**URL:** https://github.com/chitinhq/shellforge/issues/76
 
 ---
 

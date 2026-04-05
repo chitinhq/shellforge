@@ -6,7 +6,7 @@ package correction
 import (
 	"fmt"
 
-	"github.com/AgentGuardHQ/shellforge/internal/action"
+	"github.com/chitinhq/shellforge/internal/action"
 )
 
 // EscalationLevel tracks how aggressively the correction engine restricts

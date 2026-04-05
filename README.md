@@ -7,11 +7,11 @@
 [![Go](https://img.shields.io/badge/Go-1.18+-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev)
 [![GitHub Pages](https://img.shields.io/badge/Live_Site-agentguardhq.github.io/shellforge-ff6b2b?style=for-the-badge)](https://agentguardhq.github.io/shellforge)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
-[![AgentGuard](https://img.shields.io/badge/Governed_by-AgentGuard-green?style=for-the-badge)](https://github.com/AgentGuardHQ/agentguard)
+[![AgentGuard](https://img.shields.io/badge/Governed_by-AgentGuard-green?style=for-the-badge)](https://github.com/chitinhq/agentguard)
 
 *Interactive pair-programming with local models + autonomous multi-task execution — with governance on every tool call.*
 
-[Website](https://agentguardhq.github.io/shellforge) · [Docs](docs/architecture.md) · [Roadmap](docs/roadmap.md) · [AgentGuard](https://github.com/AgentGuardHQ/agentguard)
+[Website](https://agentguardhq.github.io/shellforge) · [Docs](docs/architecture.md) · [Roadmap](docs/roadmap.md) · [AgentGuard](https://github.com/chitinhq/agentguard)
 
 <img src="https://github.com/user-attachments/assets/a94a8a5e-dfeb-4771-a6ab-465d3c2f01f0" alt="ShellForge — Local Governed Agent Runtime" width="700">
 
@@ -24,11 +24,11 @@
 ### 1. Install ShellForge
 
 ```bash
-brew tap AgentGuardHQ/tap
+brew tap chitinhq/tap
 brew install shellforge
 ```
 
-Or from source: `git clone https://github.com/AgentGuardHQ/shellforge.git && cd shellforge && go build -o shellforge ./cmd/shellforge/`
+Or from source: `git clone https://github.com/chitinhq/shellforge.git && cd shellforge && go build -o shellforge ./cmd/shellforge/`
 
 ### 2. Install Ollama (if you haven't already)
 
@@ -82,7 +82,7 @@ Two modes:
 1. **Interactive REPL** (`shellforge chat`) — pair-program with a local or cloud model. Persistent conversation history, shell escapes, color output.
 2. **Autonomous agents** (`shellforge agent`, `shellforge ralph`) — one-shot tasks or multi-task loops with automatic validation and commit.
 
-Both modes share the same governance layer. Every tool call passes through [AgentGuard](https://github.com/AgentGuardHQ/agentguard) policy enforcement before execution.
+Both modes share the same governance layer. Every tool call passes through [AgentGuard](https://github.com/chitinhq/agentguard) policy enforcement before execution.
 
 ```
 You (chat) or Octi Pulpo (dispatch)
@@ -134,8 +134,8 @@ Tasks come from a JSON file or Octi Pulpo MCP dispatch. Failed validations skip 
 | **Infer** | [Ollama](https://ollama.com) | Local LLM inference (Metal GPU on Mac) |
 | **Optimize** | [RTK](https://github.com/rtk-ai/rtk) | Token compression — 70-90% reduction on shell output |
 | **Execute** | [Goose](https://block.github.io/goose) | AI coding agent with native Ollama support (headless) |
-| **Coordinate** | [Octi Pulpo](https://github.com/AgentGuardHQ/octi-pulpo) | Budget-aware dispatch, episodic memory, model cascading |
-| **Govern** | [AgentGuard](https://github.com/AgentGuardHQ/agentguard) | Policy enforcement on every action — allow/deny/correct |
+| **Coordinate** | [Octi Pulpo](https://github.com/chitinhq/octi-pulpo) | Budget-aware dispatch, episodic memory, model cascading |
+| **Govern** | [AgentGuard](https://github.com/chitinhq/agentguard) | Policy enforcement on every action — allow/deny/correct |
 | **Sandbox** | [OpenShell](https://github.com/NVIDIA/OpenShell) | Kernel-level isolation (Docker on macOS) |
 | **Scan** | [DefenseClaw](https://github.com/cisco-ai-defense/defenseclaw) | Supply chain scanner — AI Bill of Materials |
 
@@ -337,9 +337,9 @@ agents:
 | Project | Role | What It Does |
 |---------|------|--------------|
 | **ShellForge** | Orchestration | Governed agent runtime — CLI drivers + OpenClaw + local models |
-| [**Octi Pulpo**](https://github.com/AgentGuardHQ/octi-pulpo) | Coordination | Swarm brain — shared memory, model routing, budget-aware dispatch |
-| [**AgentGuard**](https://github.com/AgentGuardHQ/agentguard) | Governance | Policy enforcement, telemetry, invariants — on every tool call |
-| [**AgentGuard Cloud**](https://github.com/AgentGuardHQ/agentguard-cloud) | Observability | SaaS dashboard — session replay, compliance, analytics |
+| [**Octi Pulpo**](https://github.com/chitinhq/octi-pulpo) | Coordination | Swarm brain — shared memory, model routing, budget-aware dispatch |
+| [**AgentGuard**](https://github.com/chitinhq/agentguard) | Governance | Policy enforcement, telemetry, invariants — on every tool call |
+| [**AgentGuard Cloud**](https://github.com/chitinhq/agentguard-cloud) | Observability | SaaS dashboard — session replay, compliance, analytics |
 
 ShellForge orchestrates. Octi Pulpo coordinates. AgentGuard governs.
 
@@ -368,7 +368,7 @@ See [docs/roadmap.md](docs/roadmap.md) for what's planned.
 
 <div align="center">
 
-**[Website](https://agentguardhq.github.io/shellforge)** · **[Star on GitHub](https://github.com/AgentGuardHQ/shellforge)** · **[AgentGuard](https://github.com/AgentGuardHQ/agentguard)**
+**[Website](https://agentguardhq.github.io/shellforge)** · **[Star on GitHub](https://github.com/chitinhq/shellforge)** · **[AgentGuard](https://github.com/chitinhq/agentguard)**
 
 *Built by humans and agents*
 

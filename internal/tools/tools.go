@@ -8,8 +8,8 @@ import (
 "regexp"
 "strings"
 
-"github.com/AgentGuardHQ/shellforge/internal/governance"
-"github.com/AgentGuardHQ/shellforge/internal/logger"
+"github.com/chitinhq/shellforge/internal/governance"
+"github.com/chitinhq/shellforge/internal/logger"
 )
 
 const MaxOutput = 2000

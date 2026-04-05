@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/AgentGuardHQ/shellforge/internal/action"
+	"github.com/chitinhq/shellforge/internal/action"
 )
 
 // readOnlyCommands are shell commands that only inspect state.

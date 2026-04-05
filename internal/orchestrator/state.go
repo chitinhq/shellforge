@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AgentGuardHQ/shellforge/internal/action"
+	"github.com/chitinhq/shellforge/internal/action"
 )
 
 // Phase represents a discrete stage in the orchestrator lifecycle.

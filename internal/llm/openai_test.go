@@ -5,7 +5,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
 // newOpenAITestProvider creates an OpenAIProvider pointing at the given mock server URL.
@@ -340,5 +342,79 @@ func TestOpenAIChatToolResult(t *testing.T) {
 	}
 	if last.Content != "file contents here" {
 		t.Errorf("tool_result Content = %q, want %q", last.Content, "file contents here")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Test 8: 429 retry — success on second attempt
+// ---------------------------------------------------------------------------
+
+func TestOpenAIChat429Retry(t *testing.T) {
+	// Override retry config to use fast delays for testing.
+	origConfig := DefaultRetryConfig
+	DefaultRetryConfig = RetryConfig{MaxAttempts: 3, BaseDelay: time.Millisecond, MaxDelay: 10 * time.Millisecond}
+	defer func() { DefaultRetryConfig = origConfig }()
+
+	var calls int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		n := atomic.AddInt32(&calls, 1)
+		if n == 1 {
+			w.Header().Set("Retry-After", "0")
+			w.WriteHeader(http.StatusTooManyRequests)
+			w.Write([]byte(`{"error":{"message":"rate limited","type":"rate_limit"}}`))
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		resp := map[string]interface{}{
+			"choices": []interface{}{
+				map[string]interface{}{
+					"message":       map[string]interface{}{"role": "assistant", "content": "retried ok"},
+					"finish_reason": "stop",
+				},
+			},
+			"usage": map[string]interface{}{"prompt_tokens": 5, "completion_tokens": 2},
+		}
+		b, _ := json.Marshal(resp)
+		w.Write(b)
+	}))
+	defer srv.Close()
+
+	p := newOpenAITestProvider(srv.URL)
+	resp, err := p.Chat([]Message{{Role: "user", Content: "hi"}}, nil)
+	if err != nil {
+		t.Fatalf("Chat() should have succeeded after retry, got: %v", err)
+	}
+	if resp.Content != "retried ok" {
+		t.Errorf("Content = %q, want %q", resp.Content, "retried ok")
+	}
+	if atomic.LoadInt32(&calls) != 2 {
+		t.Errorf("calls = %d, want 2 (1 fail + 1 success)", atomic.LoadInt32(&calls))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Test 9: 401 fatal — no retry
+// ---------------------------------------------------------------------------
+
+func TestOpenAIChat401NoRetry(t *testing.T) {
+	origConfig := DefaultRetryConfig
+	DefaultRetryConfig = RetryConfig{MaxAttempts: 3, BaseDelay: time.Millisecond, MaxDelay: 10 * time.Millisecond}
+	defer func() { DefaultRetryConfig = origConfig }()
+
+	var calls int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&calls, 1)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"error":{"message":"invalid api key","type":"authentication_error"}}`))
+	}))
+	defer srv.Close()
+
+	p := newOpenAITestProvider(srv.URL)
+	_, err := p.Chat([]Message{{Role: "user", Content: "hi"}}, nil)
+	if err == nil {
+		t.Fatal("Chat() should have returned error for 401")
+	}
+	if atomic.LoadInt32(&calls) != 1 {
+		t.Errorf("calls = %d, want 1 (no retry on 401)", atomic.LoadInt32(&calls))
 	}
 }

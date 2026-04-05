@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AgentGuardHQ/shellforge/internal/agent"
-	"github.com/AgentGuardHQ/shellforge/internal/governance"
+	"github.com/chitinhq/shellforge/internal/agent"
+	"github.com/chitinhq/shellforge/internal/governance"
 )
 
 // TaskSourceType defines how tasks are sourced.

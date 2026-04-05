@@ -5,8 +5,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/AgentGuardHQ/shellforge/internal/governance"
-	"github.com/AgentGuardHQ/shellforge/internal/ollama"
+	"github.com/chitinhq/shellforge/internal/governance"
+	"github.com/chitinhq/shellforge/internal/ollama"
 )
 
 func cmdStatusFull() {

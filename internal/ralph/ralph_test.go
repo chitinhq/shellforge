@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/AgentGuardHQ/shellforge/internal/agent"
+	"github.com/chitinhq/shellforge/internal/agent"
 )
 
 func TestRalphConfig_Defaults(t *testing.T) {

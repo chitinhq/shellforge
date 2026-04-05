@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/AgentGuardHQ/shellforge/internal/governance"
-	"github.com/AgentGuardHQ/shellforge/internal/llm"
+	"github.com/chitinhq/shellforge/internal/governance"
+	"github.com/chitinhq/shellforge/internal/llm"
 )
 
 // mockProvider is a test double that returns pre-configured responses.
