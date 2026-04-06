@@ -7,21 +7,10 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/chitinhq/shellforge/internal/action"
+	"github.com/chitinhq/shellforge/internal/canon"
 )
-
-// readOnlyCommands are shell commands that only inspect state.
-var readOnlyCommands = []string{
-	"ls", "cat", "head", "tail", "grep", "find", "echo",
-	"pwd", "which", "go test", "go vet",
-}
-
-// destructiveCommands are shell commands with high blast radius.
-var destructiveCommands = []string{
-	"rm", "git push", "git reset", "chmod", "chown", "kill", "dd",
-}
 
 // Normalize converts a raw tool call into a Canonical Action Representation.
 func Normalize(runID string, sequence int, agent string, toolName string, params map[string]string) action.Proposal {
@@ -97,28 +86,67 @@ func classifyTool(toolName string, params map[string]string) (action.ActionType,
 	}
 }
 
-// classifyShellRisk inspects a shell command string to determine risk level.
-func classifyShellRisk(command string) action.RiskLevel {
-	trimmed := strings.TrimSpace(command)
+// canonicalReadOnly are canonical tool names that only inspect state.
+var canonicalReadOnly = map[string]bool{
+	"read": true, "grep": true, "find": true, "ls": true,
+	"echo": true, "wc": true, "diff": true, "sort": true, "uniq": true,
+}
 
-	// Check destructive patterns first (highest priority).
-	for _, pattern := range destructiveCommands {
-		if strings.Contains(trimmed, pattern) {
-			return action.RiskDestructive
-		}
+// canonicalDestructive are canonical tool+action combos with high blast radius.
+var canonicalDestructive = map[string]bool{
+	"rm":         true,
+	"dd":         true,
+	"git.push":   true,
+	"git.reset":  true,
+	"chmod":      true,
+	"chown":      true,
+	"kill":       true,
+}
+
+// classifyShellRisk inspects a shell command string to determine risk level.
+// Uses canonical parsing for accurate classification.
+func classifyShellRisk(command string) action.RiskLevel {
+	cmd := canon.ParseOne(command)
+
+	// Check destructive first.
+	toolAction := cmd.Tool
+	if cmd.Action != "" {
+		toolAction = cmd.Tool + "." + cmd.Action
+	}
+	if canonicalDestructive[toolAction] || canonicalDestructive[cmd.Tool] {
+		return action.RiskDestructive
 	}
 
-	// Check read-only patterns: command must be exactly the token or start with
-	// "<token> " (space boundary) to avoid matching longer commands that share a
-	// prefix (e.g. "catalog_tool" matching "cat", "finder.sh" matching "find").
-	for _, cmd := range readOnlyCommands {
-		if trimmed == cmd || strings.HasPrefix(trimmed, cmd+" ") {
+	// Check read-only.
+	if canonicalReadOnly[cmd.Tool] {
+		return action.RiskReadOnly
+	}
+
+	// Read-only git subcommands.
+	if cmd.Tool == "git" {
+		switch cmd.Action {
+		case "status", "log", "diff", "show", "branch", "remote", "tag", "stash":
 			return action.RiskReadOnly
 		}
 	}
 
-	// Default: mutating.
+	// Read-only go subcommands.
+	if cmd.Tool == "go" {
+		switch cmd.Action {
+		case "test", "vet", "doc", "list", "version":
+			return action.RiskReadOnly
+		}
+	}
+
 	return action.RiskMutating
+}
+
+// ShellFingerprint returns the canonical digest of a shell command,
+// suitable for deduplication and loop detection. Two semantically
+// equivalent commands produce the same fingerprint.
+func ShellFingerprint(command string) string {
+	cmd := canon.ParseOne(command)
+	return cmd.Digest
 }
 
 // extractTarget pulls the most relevant target path/identifier from params.

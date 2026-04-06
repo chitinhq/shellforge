@@ -17,6 +17,7 @@ import (
 "time"
 
 "github.com/chitinhq/shellforge/internal/agent"
+"github.com/chitinhq/shellforge/internal/canon"
 "github.com/chitinhq/shellforge/internal/governance"
 "github.com/chitinhq/shellforge/internal/llm"
 "github.com/chitinhq/shellforge/internal/logger"
@@ -102,6 +103,12 @@ case "status":
 cmdStatusFull()
 case "scan":
 cmdScan()
+case "canonicalize", "canon":
+if len(os.Args) < 3 {
+	fmt.Fprintln(os.Stderr, "Usage: shellforge canonicalize \"command string\"")
+	os.Exit(1)
+}
+cmdCanonicalize(strings.Join(os.Args[2:], " "))
 case "version", "--version", "-v":
 fmt.Printf("shellforge %s (%s/%s)\n", version, runtime.GOOS, runtime.GOARCH)
 case "help", "--help", "-h":
@@ -125,6 +132,7 @@ Usage:
   shellforge chat                   Interactive pair-programming REPL
   shellforge status                 Full ecosystem health check
   shellforge scan [dir]             DefenseClaw supply chain scan
+  shellforge canonicalize "cmd"    Parse shell command into canonical JSON
   shellforge version                Print version
 
   shellforge ralph [flags]          Run Ralph Loop (stateless-iterative task execution)
@@ -1213,4 +1221,14 @@ if _, err := os.Stat("/dev/dri/renderD128"); err == nil {
 return true
 }
 return false
+}
+
+func cmdCanonicalize(raw string) {
+	pipeline := canon.Parse(raw)
+	data, err := json.MarshalIndent(pipeline, "", "  ")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(string(data))
 }
