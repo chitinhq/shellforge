@@ -17,7 +17,7 @@ import (
 "time"
 
 "github.com/chitinhq/shellforge/internal/agent"
-"github.com/chitinhq/shellforge/internal/canon"
+"github.com/chitinhq/chitin/canon"
 "github.com/chitinhq/shellforge/internal/governance"
 "github.com/chitinhq/shellforge/internal/llm"
 "github.com/chitinhq/shellforge/internal/logger"

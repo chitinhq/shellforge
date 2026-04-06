@@ -9,7 +9,7 @@ import (
 	"sort"
 
 	"github.com/chitinhq/shellforge/internal/action"
-	"github.com/chitinhq/shellforge/internal/canon"
+	"github.com/chitinhq/chitin/canon"
 )
 
 // Normalize converts a raw tool call into a Canonical Action Representation.

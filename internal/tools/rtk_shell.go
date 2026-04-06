@@ -5,7 +5,7 @@ import (
 "strings"
 "time"
 
-"github.com/chitinhq/shellforge/internal/canon"
+"github.com/chitinhq/chitin/canon"
 )
 
 // rtkAvailable checks if RTK is installed for token-compressed shell output.

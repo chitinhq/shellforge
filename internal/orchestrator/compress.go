@@ -1,7 +1,7 @@
 package orchestrator
 
 import (
-	"github.com/chitinhq/shellforge/internal/canon"
+	"github.com/chitinhq/chitin/canon"
 )
 
 // tokenThreshold is the maximum output size (in estimated tokens) that
