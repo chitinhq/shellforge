@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AgentGuardHQ/shellforge/internal/action"
+	"github.com/chitinhq/shellforge/internal/action"
 )
 
 // TestClassifyShellRisk_ReadOnly verifies that read-only commands are correctly

@@ -144,8 +144,8 @@ Octi Pulpo routes tasks to the cheapest capable driver:
 | **Infer** | [Ollama](https://ollama.com) | Local LLM inference (Metal GPU on Mac) |
 | **Optimize** | [RTK](https://github.com/rtk-ai/rtk) | Token compression — 70-90% reduction on shell output |
 | **Execute** | [Goose](https://block.github.io/goose) / [OpenClaw](https://github.com/openclaw/openclaw) | Agent execution + browser automation |
-| **Coordinate** | [Octi Pulpo](https://github.com/AgentGuardHQ/octi-pulpo) | Budget-aware dispatch, episodic memory, model cascading |
-| **Govern** | [AgentGuard](https://github.com/AgentGuardHQ/agentguard) | Policy enforcement on every action |
+| **Coordinate** | [Octi Pulpo](https://github.com/chitinhq/octi) | Budget-aware dispatch, episodic memory, model cascading |
+| **Govern** | [Chitin](https://github.com/chitinhq/chitin) | Policy enforcement on every action |
 | **Sandbox** | [OpenShell](https://github.com/NVIDIA/OpenShell) | Kernel-level isolation (Docker on macOS) |
 | **Scan** | [DefenseClaw](https://github.com/cisco-ai-defense/defenseclaw) | Supply chain scanner — AI Bill of Materials |
 

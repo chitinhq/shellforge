@@ -38,7 +38,7 @@ jobs:
           VERSION="${VERSION#v}"
 
           # Download checksums
-          curl -sL "https://github.com/AgentGuardHQ/shellforge/releases/download/v${VERSION}/checksums.txt" -o checksums.txt
+          curl -sL "https://github.com/chitinhq/shellforge/releases/download/v${VERSION}/checksums.txt" -o checksums.txt
 
           DARWIN_ARM64=$(grep darwin_arm64 checksums.txt | awk '{print $1}')
           DARWIN_AMD64=$(grep darwin_amd64 checksums.txt | awk '{print $1}')
@@ -51,28 +51,28 @@ jobs:
 
           class Shellforge < Formula
             desc "Local governed agent runtime — wraps Ollama + AgentGuard governance"
-            homepage "https://github.com/AgentGuardHQ/shellforge"
+            homepage "https://github.com/chitinhq/shellforge"
             version "${VERSION}"
             license "MIT"
 
             on_macos do
               on_arm do
-                url "https://github.com/AgentGuardHQ/shellforge/releases/download/v${VERSION}/shellforge_${VERSION}_darwin_arm64.tar.gz"
+                url "https://github.com/chitinhq/shellforge/releases/download/v${VERSION}/shellforge_${VERSION}_darwin_arm64.tar.gz"
                 sha256 "${DARWIN_ARM64}"
               end
               on_intel do
-                url "https://github.com/AgentGuardHQ/shellforge/releases/download/v${VERSION}/shellforge_${VERSION}_darwin_amd64.tar.gz"
+                url "https://github.com/chitinhq/shellforge/releases/download/v${VERSION}/shellforge_${VERSION}_darwin_amd64.tar.gz"
                 sha256 "${DARWIN_AMD64}"
               end
             end
 
             on_linux do
               on_arm do
-                url "https://github.com/AgentGuardHQ/shellforge/releases/download/v${VERSION}/shellforge_${VERSION}_linux_arm64.tar.gz"
+                url "https://github.com/chitinhq/shellforge/releases/download/v${VERSION}/shellforge_${VERSION}_linux_arm64.tar.gz"
                 sha256 "${LINUX_ARM64}"
               end
               on_intel do
-                url "https://github.com/AgentGuardHQ/shellforge/releases/download/v${VERSION}/shellforge_${VERSION}_linux_amd64.tar.gz"
+                url "https://github.com/chitinhq/shellforge/releases/download/v${VERSION}/shellforge_${VERSION}_linux_amd64.tar.gz"
                 sha256 "${LINUX_AMD64}"
               end
             end
@@ -88,7 +88,7 @@ jobs:
           FORMULA
 
           # Push to homebrew-tap repo
-          git clone "https://x-access-token:${GH_TOKEN}@github.com/AgentGuardHQ/homebrew-tap.git" tap
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/chitinhq/homebrew-tap.git" tap
           mkdir -p tap/Formula
           cp shellforge.rb tap/Formula/shellforge.rb
           cd tap

@@ -17,15 +17,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AgentGuardHQ/shellforge/internal/action"
-	"github.com/AgentGuardHQ/shellforge/internal/correction"
-	"github.com/AgentGuardHQ/shellforge/internal/governance"
-	"github.com/AgentGuardHQ/shellforge/internal/intent"
-	"github.com/AgentGuardHQ/shellforge/internal/llm"
-	"github.com/AgentGuardHQ/shellforge/internal/logger"
-	"github.com/AgentGuardHQ/shellforge/internal/normalizer"
-	"github.com/AgentGuardHQ/shellforge/internal/ollama"
-	"github.com/AgentGuardHQ/shellforge/internal/tools"
+	"github.com/chitinhq/shellforge/internal/action"
+	"github.com/chitinhq/shellforge/internal/correction"
+	"github.com/chitinhq/shellforge/internal/governance"
+	"github.com/chitinhq/shellforge/internal/intent"
+	"github.com/chitinhq/shellforge/internal/llm"
+	"github.com/chitinhq/shellforge/internal/logger"
+	"github.com/chitinhq/shellforge/internal/normalizer"
+	"github.com/chitinhq/shellforge/internal/ollama"
+	"github.com/chitinhq/shellforge/internal/tools"
 )
 
 type LoopConfig struct {

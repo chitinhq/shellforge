@@ -46,7 +46,7 @@ class ShellForgeAgent(BaseInstalledAgent):
         # Clone and build ShellForge
         self.exec_as_agent(
             "cd /tmp &&"
-            " git clone --depth 1 https://github.com/AgentGuardHQ/shellforge.git &&"
+            " git clone --depth 1 https://github.com/chitinhq/shellforge.git &&"
             " cd shellforge &&"
             " go build -o /usr/local/bin/shellforge ./cmd/shellforge/"
         )

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AgentGuardHQ/shellforge/internal/agent"
-	"github.com/AgentGuardHQ/shellforge/internal/governance"
-	"github.com/AgentGuardHQ/shellforge/internal/llm"
+	"github.com/chitinhq/shellforge/internal/agent"
+	"github.com/chitinhq/shellforge/internal/governance"
+	"github.com/chitinhq/shellforge/internal/llm"
 )
 
 // Orchestrator manages sub-agent execution with concurrency control.

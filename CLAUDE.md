@@ -1,6 +1,6 @@
 ## Agent Identity
 
-At session start, if you see `[AgentGuard] No agent identity set`, ask the user:
+At session start, if you see `[Chitin] No agent identity set`, ask the user:
 1. **Role**: developer / reviewer / ops / security / planner
 2. **Driver**: human / claude-code / copilot / ci
 

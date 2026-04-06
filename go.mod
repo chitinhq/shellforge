@@ -1,4 +1,4 @@
-module github.com/AgentGuardHQ/shellforge
+module github.com/chitinhq/shellforge
 
 go 1.18
 
