@@ -1,5 +1,9 @@
 package orchestrator
 
+import (
+	"github.com/chitinhq/shellforge/internal/canon"
+)
+
 // tokenThreshold is the maximum output size (in estimated tokens) that
 // passes through without compression. Outputs below this are returned as-is.
 const tokenThreshold = 750
@@ -8,20 +12,29 @@ const tokenThreshold = 750
 // Strategy:
 //   1. If output < 750 tokens (estimated), return as-is
 //   2. Otherwise truncate to the threshold with a marker
-//
-// A future version will use LLM summarization when a Provider is available.
 func CompressResult(output string) string {
 	estimated := estimateTokens(output)
 	if estimated <= tokenThreshold {
 		return output
 	}
 
-	// Truncate to approximately tokenThreshold tokens (4 chars per token estimate)
 	maxChars := tokenThreshold * 4
 	if maxChars >= len(output) {
 		return output
 	}
 	return output[:maxChars] + "\n\n[... output truncated — " + itoa(estimated-tokenThreshold) + " tokens omitted]"
+}
+
+// CompressShellResult compresses shell command output using canonical tool
+// knowledge for structured compression instead of blind truncation.
+func CompressShellResult(command, output string) string {
+	estimated := estimateTokens(output)
+	if estimated <= tokenThreshold {
+		return output
+	}
+
+	cmd := canon.ParseOne(command)
+	return canon.CompressOutput(cmd, output)
 }
 
 // estimateTokens provides a rough token count (1 token ~ 4 chars).
