@@ -9,7 +9,7 @@ import (
 
 // RTK — Rust Token Killer. Wraps shell commands to compress output 60-90%
 // before feeding it back to the LLM. Installed: rtk-ai/tap/rtk (brew).
-// Already on this system at /home/jared/.local/bin/rtk v0.31.0.
+// Install: brew install rtk-ai/tap/rtk (or cargo install rtk).
 type RTK struct {
 enabled bool
 }

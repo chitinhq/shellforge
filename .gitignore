@@ -11,6 +11,14 @@ outputs/
 # Environment
 .env
 
+# Agent state
+.agentguard/
+.chitin/
+.claude/settings.json
+
 # OS
 .DS_Store
 Thumbs.db
+
+# Compiled binary
+cmd/shellforge/shellforge
