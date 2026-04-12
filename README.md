@@ -14,55 +14,61 @@
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    subgraph "Entry Points"
-        Chat[shellforge chat]
-        Agent[shellforge agent]
-        Ralph[shellforge ralph]
-        Run[shellforge run driver]
-        Serve[shellforge serve]
-    end
+```text
+Entry Points
+------------
+  shellforge chat -----+
+  shellforge agent ----+--> [ Agent Loop ]
+  shellforge ralph ----+
+  shellforge run <driver> --> [ CLI Driver Subprocess ]
+  shellforge serve ---------> [ Scheduler + Queue ] --> [ Agent Loop ]
 
-    Chat & Agent & Ralph --> Loop[Agent Loop]
-    Run --> Driver[CLI Driver Subprocess]
-    Serve --> Scheduler[Scheduler + Queue]
-    Scheduler --> Loop
+Agent Loop
+----------
+  [ Agent Loop ]
+        |
+        v
+  [ Intent Parser ]  (any format: JSON, XML, bare)
+        |
+        v  Canonical Action
+  [ Normalizer ] ---+
+                    |
+  (alt: Native Tool-Use Path) ----+
+                                  v
+                    +---------------------------+
+                    |     Governance Layer      |
+                    |                           |
+                    |  [ governance.Engine ]    |
+                    |            |  evaluate    |
+                    |            v              |
+                    |      chitin.yaml          |
+                    |        /       \          |
+                    |      deny     allow       |
+                    |       |         |         |
+                    |       v         v         |
+                    | [Correction] [ Tools ]    |
+                    +---------------------------+
+                            |         |
+          structured feedback|         |
+                            v         v
+                      [ Agent Loop ]   +--> Tool Execution
 
-    Loop --> Intent[Intent Parser]
-    Intent -->|"any format: JSON, XML, bare"| Normalizer[Normalizer]
-    Normalizer -->|Canonical Action| Gov
+Tool Execution
+--------------
+  8 Built-in Tools:
+    read_file  write_file  edit_file  run_shell
+    glob  grep  list_directory  search_files
 
-    Loop --> ProviderPath[Native Tool-Use Path]
-    ProviderPath --> Gov
+LLM Providers
+-------------
+  [ Agent Loop ] --> Ollama (local)  OR  Anthropic API
 
-    subgraph "Governance Layer"
-        Gov[governance.Engine] -->|evaluate| Policy[chitin.yaml]
-        Policy -->|deny| Correction[Correction Engine]
-        Policy -->|allow| Tools
-    end
-
-    Correction -->|structured feedback| Loop
-
-    subgraph "Tool Execution"
-        Tools[8 Built-in Tools]
-        Tools --> RFile[read_file]
-        Tools --> WFile[write_file]
-        Tools --> Edit[edit_file]
-        Tools --> Shell[run_shell]
-        Tools --> Glob[glob]
-        Tools --> Grep[grep]
-        Tools --> LS[list_directory]
-        Tools --> Search[search_files]
-    end
-
-    subgraph "LLM Providers"
-        Loop --> Ollama[Ollama - local]
-        Loop --> Anthropic[Anthropic API]
-    end
-
-    Loop --> Drift[Drift Detector]
-    Drift -->|score below threshold| Kill[Kill / Steer]
+Drift Detector
+--------------
+  [ Agent Loop ] --> [ Drift Detector ]
+                           |  (score below threshold)
+                           v
+                       Kill / Steer
 ```
 
 ## Getting Started
