@@ -181,6 +181,20 @@ go test ./...
 golangci-lint run
 ```
 
+## Part of the Chitin Platform
+
+ShellForge is the local governed agent runtime. Other repos:
+
+| Repo | Role | Start here if you want to… |
+|------|------|------------------------------|
+| [chitin](https://github.com/chitinhq/chitin) | Governance kernel — policy, invariants, hooks | Gate an agent you already use |
+| **shellforge** (this repo) | Local governed agent runtime | Run a governed agent end-to-end |
+| [octi](https://github.com/chitinhq/octi) | Swarm coordinator — triage, dispatch, routing | Orchestrate multiple agents |
+| [sentinel](https://github.com/chitinhq/sentinel) | Telemetry + detection on agent traces | Analyze how agents fail |
+| [llmint](https://github.com/chitinhq/llmint) | Token-economics middleware for LLM providers | Control LLM cost in Go apps |
+
+New to the platform? See [chitin's GETTING_STARTED.md](https://github.com/chitinhq/chitin/blob/main/GETTING_STARTED.md).
+
 ## License
 
 MIT
