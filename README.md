@@ -37,7 +37,7 @@ flowchart TD
     ProviderPath --> Gov
 
     subgraph "Governance Layer"
-        Gov[governance.Engine] -->|evaluate| Policy[agentguard.yaml]
+        Gov[governance.Engine] -->|evaluate| Policy[chitin.yaml]
         Policy -->|deny| Correction[Correction Engine]
         Policy -->|allow| Tools
     end
@@ -136,7 +136,7 @@ shellforge agent --thinking-budget 8000 "prompt"  # Extended thinking (Sonnet/Op
 
 ## Governance
 
-Every tool call passes through the governance engine before execution. Policies are defined in `agentguard.yaml`:
+Every tool call passes through the governance engine before execution. Policies are defined in `chitin.yaml`:
 
 ```yaml
 mode: enforce   # enforce | monitor
@@ -162,7 +162,7 @@ When a tool call is denied, the correction engine feeds structured feedback back
 | Package | Purpose |
 |---------|---------|
 | `internal/agent` | Core agent loop with tool calling, drift detection, context compaction |
-| `internal/governance` | Policy engine -- evaluates every action against `agentguard.yaml` |
+| `internal/governance` | Policy engine -- evaluates every action against `chitin.yaml` |
 | `internal/correction` | Escalating feedback for denied actions (retry budget + structured hints) |
 | `internal/intent` | Format-agnostic intent parser (JSON, XML, bare JSON, OpenAI function_call) |
 | `internal/normalizer` | Converts any tool call into a Canonical Action Representation |

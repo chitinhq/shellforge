@@ -50,7 +50,7 @@ jobs:
           # frozen_string_literal: true
 
           class Shellforge < Formula
-            desc "Local governed agent runtime — wraps Ollama + AgentGuard governance"
+            desc "Local governed agent runtime — wraps Ollama + Chitin governance"
             homepage "https://github.com/chitinhq/shellforge"
             version "${VERSION}"
             license "MIT"

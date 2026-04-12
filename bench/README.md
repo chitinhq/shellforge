@@ -31,7 +31,7 @@ SHELLFORGE_MODEL=qwen3:30b harbor run -d terminal-bench@2.0 \
 1. Harbor spins up a Docker container per task
 2. ShellForge is built from source inside the container
 3. Ollama is installed and the model is pulled
-4. `shellforge agent "<instruction>"` runs with full AgentGuard governance
+4. `shellforge agent "<instruction>"` runs with full Chitin governance
 5. Harbor's test harness checks results (pass/fail)
 
 ## Submit to Leaderboard

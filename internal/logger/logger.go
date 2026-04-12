@@ -88,7 +88,7 @@ if display == "" {
 display = tool
 }
 paramSummary := summarize(params)
-fmt.Printf("[🛡️ AgentGuard] policy: %s — %s → %s(%s)\n", status, agent, display, paramSummary)
+fmt.Printf("[🛡️ Chitin] policy: %s — %s → %s(%s)\n", status, agent, display, paramSummary)
 if !allowed {
 fmt.Printf("  ↳ %s: %s\n", policyName, reason)
 }

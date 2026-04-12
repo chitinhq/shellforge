@@ -44,10 +44,10 @@ DenyNet    bool     `json:"deny_network" yaml:"deny_network"`
 AllowHosts []string `json:"allow_hosts,omitempty" yaml:"allow_hosts"`
 }
 
-// CompileFromGovernance converts agentguard.yaml policies into an OpenShell
-// sandbox policy. This is the bridge: AgentGuard policy → kernel enforcement.
+// CompileFromGovernance converts chitin.yaml policies into an OpenShell
+// sandbox policy. This is the bridge: Chitin policy → kernel enforcement.
 func (o *OpenShell) CompileFromGovernance(governancePath string) (*SandboxPolicy, error) {
-// Read agentguard.yaml and translate to OpenShell format
+// Read chitin.yaml and translate to OpenShell format
 policy := &SandboxPolicy{
 Name:       "shellforge-agent",
 AllowRead:  []string{".", "/usr/lib", "/usr/share", "/etc/ssl"},

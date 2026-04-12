@@ -1,7 +1,7 @@
 #!/bin/bash
 # govern-shell.sh — Governed shell for ShellForge
 #
-# Every command is evaluated by AgentGuard before running.
+# Every command is evaluated by Chitin before running.
 # Set as SHELL for governed agents (Goose, etc.)
 
 set -euo pipefail
@@ -12,7 +12,7 @@ REAL_SHELL="${SHELLFORGE_REAL_SHELL:-/bin/bash}"
 if ! command -v shellforge &>/dev/null; then
     exec "$REAL_SHELL" "$@"
 fi
-if [ ! -f "agentguard.yaml" ] && [ ! -f "../agentguard.yaml" ]; then
+if [ ! -f "chitin.yaml" ] && [ ! -f "../chitin.yaml" ]; then
     exec "$REAL_SHELL" "$@"
 fi
 
@@ -21,7 +21,7 @@ if [ "${1:-}" = "-c" ]; then
     shift
     COMMAND="$*"
 
-    # Evaluate through AgentGuard
+    # Evaluate through Chitin
     # Use jq --arg for safe JSON construction: handles quotes, backslashes, control chars in $COMMAND
     if command -v jq &>/dev/null; then
         JSON_PAYLOAD=$(jq -n --arg cmd "$COMMAND" '{"tool":"run_shell","action":$cmd,"path":"."}')
@@ -38,7 +38,7 @@ if [ "${1:-}" = "-c" ]; then
         else
             REASON=$(printf '%s' "$RESULT" | sed 's/.*"reason":"\([^"]*\)".*/\1/')
         fi
-        echo "[AgentGuard] DENIED: $REASON" >&2
+        echo "[Chitin] DENIED: $REASON" >&2
         exit 1
     fi
 

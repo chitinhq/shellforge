@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// OpenClawEngine wraps the OpenClaw CLI with AgentGuard governance.
+// OpenClawEngine wraps the OpenClaw CLI with Chitin governance.
 // OpenClaw is a browser automation + integrations runtime by Anthropic.
 // Installed via npm: npx @anthropic-ai/openclaw, or as a standalone binary.
 // Supports headless mode (for server/RunPod) and Extension Relay mode (local Mac with browser).
@@ -70,10 +70,10 @@ func (e *OpenClawEngine) Run(task Task) (*Result, error) {
 	// Non-interactive mode for headless execution
 	args = append(args, "--non-interactive")
 
-	// Set up AgentGuard governance via env
+	// Set up Chitin governance via env
 	env := append(os.Environ(),
-		"AGENTGUARD_POLICY=agentguard.yaml",
-		"AGENTGUARD_MODE=enforce",
+		"CHITIN_POLICY=chitin.yaml",
+		"CHITIN_MODE=enforce",
 	)
 
 	// Wrap shell commands through govern-shell.sh

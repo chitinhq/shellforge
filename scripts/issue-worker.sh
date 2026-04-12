@@ -115,7 +115,7 @@ work_issue() {
   git -C "$clone_dir" checkout -b "$branch" 2>/dev/null || git -C "$clone_dir" checkout "$branch" 2>/dev/null
 
   # Bootstrap worker governance policy (permissive enough to write code)
-  cp "${SCRIPT_DIR}/../policies/worker.yaml" "$clone_dir/agentguard.yaml" 2>/dev/null || true
+  cp "${SCRIPT_DIR}/../policies/worker.yaml" "$clone_dir/chitin.yaml" 2>/dev/null || true
 
   # Read full issue body
   local body

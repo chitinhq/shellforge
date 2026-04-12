@@ -3,7 +3,7 @@
 // Uses format-agnostic intent parsing: extracts action intent from ANY
 // model output format (structured tool_calls, JSON blocks, XML tags,
 // bare JSON, OpenAI function_call format). Every extracted action goes
-// through AgentGuard governance — no exceptions.
+// through Chitin governance — no exceptions.
 //
 // When a Provider with native tool-use is set (e.g. Anthropic), the loop
 // uses structured ToolCalls directly instead of text-based intent parsing.

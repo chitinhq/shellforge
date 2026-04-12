@@ -37,7 +37,7 @@ func cmdStatusFull() {
 
 	// ── Governance ──
 	total++
-	fmt.Println("\n🛡️  AgentGuard (governance)")
+	fmt.Println("\n🛡️  Chitin (governance)")
 	configPath := findGovernanceConfig()
 	if configPath != "" {
 		eng, err := governance.NewEngine(configPath)
@@ -51,7 +51,7 @@ func cmdStatusFull() {
 			}
 		}
 	} else {
-		fmt.Println("  ✗ no agentguard.yaml found")
+		fmt.Println("  ✗ no chitin.yaml found")
 		fmt.Println("    → shellforge setup")
 	}
 

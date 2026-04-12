@@ -5,7 +5,7 @@
 ### v0.1.0 — Foundation
 - [x] Go binary with Ollama integration
 - [x] 3 agents (QA, report, prototype)
-- [x] agentguard.yaml governance (enforce/monitor)
+- [x] chitin.yaml governance (enforce/monitor)
 - [x] Cron-based scheduling
 
 ### v0.2.0 — Release Pipeline
@@ -35,7 +35,7 @@
 
 ### v0.6.0 — Goose + Governed Shell
 - [x] Goose as local model driver (`shellforge run goose`)
-- [x] `govern-shell.sh` — shell wrapper that evaluates every command through AgentGuard
+- [x] `govern-shell.sh` — shell wrapper that evaluates every command through Chitin
 - [x] `shellforge run goose` sets SHELL to governed wrapper automatically
 - [x] Fixed catch-all deny bug (bounded-execution policy was denying everything)
 - [x] Dagu DAG templates (sdlc-swarm, studio-swarm, workspace-swarm, multi-driver)
@@ -98,7 +98,7 @@ Foundation types exist (`internal/action/`, `internal/orchestrator/`, `internal/
 
 ### Phase 7.5 — Octi Pulpo Integration + Browser Drivers
 
-ShellForge orchestrates, Octi Pulpo coordinates, AgentGuard governs. This phase wires the three together.
+ShellForge orchestrates, Octi Pulpo coordinates, Chitin governs. This phase wires the three together.
 
 #### 7.5.1 — Octi Pulpo Coordination
 - [ ] Consume Octi Pulpo MCP tools (route_recommend, coord_claim, coord_signal)
@@ -110,16 +110,16 @@ ShellForge orchestrates, Octi Pulpo coordinates, AgentGuard governs. This phase 
 - [ ] OpenClaw as execution runtime for browser-based agents
 - [ ] NemoClaw as optional adapter (never a dependency — protect kernel independence)
 - [ ] Browser driver support in `shellforge run` (alongside Goose, Claude Code, Copilot, Codex, Gemini)
-- [ ] Governed browser actions through AgentGuard kernel
+- [ ] Governed browser actions through Chitin kernel
 
 #### 7.5.3 — Ecosystem Wiring
 - [ ] ShellForge agents auto-connect to Octi Pulpo MCP server on startup
 - [ ] Shared memory across ShellForge-managed agents via Octi Pulpo memory_store/recall
 - [ ] Model routing delegation — ShellForge defers to Octi Pulpo route_recommend
 
-### Phase 8 — AgentGuard MCP Server
+### Phase 8 — Chitin MCP Server
 - [ ] MCP server exposing governed tools
-- [ ] Goose → MCP → AgentGuard → execute
+- [ ] Goose → MCP → Chitin → execute
 - [ ] Dual-layer: kernel enforces, MCP integrates
 
 ### Phase 9 — Terminal Bench 2.0
@@ -136,7 +136,7 @@ ShellForge orchestrates, Octi Pulpo coordinates, AgentGuard governs. This phase 
 ### Phase 11 — Replace Workspace Bash Swarm ✅ DONE
 - [x] Migrated to API-driven dispatch: Octi Pulpo → ShellForge → Anthropic API
 - [x] GH Actions Copilot Agent workflow (`dispatch-agent.yml`) for free-tier automation
-- [x] ShellForge is now the execution harness for the agentguard-workspace swarm
+- [x] ShellForge is now the execution harness for the chitin-workspace swarm
 
 ---
 
@@ -146,7 +146,7 @@ Bugs identified during v0.6.x development. Fix before v1.0.
 
 | Issue | Package | Severity | Description |
 |-------|---------|----------|-------------|
-| [#69](https://github.com/chitinhq/shellforge/issues/69) | `agentguard.yaml` | High | Governance gap: plain `rm` and `rm -r` bypass `no-destructive-rm` policy |
+| [#69](https://github.com/chitinhq/shellforge/issues/69) | `chitin.yaml` | High | Governance gap: plain `rm` and `rm -r` bypass `no-destructive-rm` policy |
 | [#67](https://github.com/chitinhq/shellforge/issues/67) | `scripts/govern-shell.sh` | Medium | Fragile `sed`-based JSON parsing — denial reason extraction can fail or corrupt |
 | [#65](https://github.com/chitinhq/shellforge/issues/65) | `internal/scheduler` | Medium | `os.WriteFile` error silently ignored — audit log loss |
 | [#63](https://github.com/chitinhq/shellforge/issues/63) | `internal/normalizer` | Medium | `classifyShellRisk` prefix match too broad — `catalog_tool` classified as read-only |
@@ -170,7 +170,7 @@ Bugs identified during v0.6.x development. Fix before v1.0.
 | Gemini CLI | API driver (Linux) | Coming soon |
 | Ollama | Local inference | Working |
 | Anthropic API | Cloud inference | Working (prompt caching) |
-| AgentGuard | Governance kernel | Working (YAML eval + Go kernel) |
+| Chitin | Governance kernel | Working (YAML eval + Go kernel) |
 | Octi Pulpo | Swarm coordination | Working (MCP) |
 | RTK | Token compression | Optional |
 | Docker | Sandbox | Optional |

@@ -10,7 +10,7 @@
 //   - Ollama-specific format variations
 //
 // This parser normalizes ALL of these into a unified Action struct.
-// Every extracted action goes through AgentGuard governance — no exceptions.
+// Every extracted action goes through Chitin governance — no exceptions.
 //
 // This is ShellForge's moat: format-agnostic execution firewall.
 package intent

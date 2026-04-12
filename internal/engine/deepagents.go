@@ -41,10 +41,10 @@ const agent = createDeepAgent({
   maxSteps: %d,
   timeout: %d * 1000,
   governance: {
-    policyFile: 'agentguard.yaml',
+    policyFile: 'chitin.yaml',
     mode: 'enforce',
     onToolCall: (tool, params) => {
-      console.error('[🛡️ AgentGuard] evaluating: ' + tool);
+      console.error('[🛡️ Chitin] evaluating: ' + tool);
     }
   }
 });
@@ -66,7 +66,7 @@ agent.invoke({
 cmd := exec.Command("node", "-e", script)
 cmd.Dir = task.WorkDir
 cmd.Env = append(os.Environ(),
-"AGENTGUARD_POLICY=agentguard.yaml",
+"CHITIN_POLICY=chitin.yaml",
 )
 
 out, err := cmd.CombinedOutput()

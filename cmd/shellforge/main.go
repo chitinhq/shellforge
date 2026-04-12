@@ -139,8 +139,8 @@ Usage:
   shellforge serve [config]        Simple daemon mode (built-in scheduler)
   shellforge swarm                 Setup Dagu orchestration (DAG workflows + web UI)
 
-Governance:  agentguard.yaml — every tool call evaluated before execution.
-Stack:       Ollama · AgentGuard · Dagu · RTK
+Governance:  chitin.yaml — every tool call evaluated before execution.
+Stack:       Ollama · Chitin · Dagu · RTK
 
 `, version)
 }
@@ -252,13 +252,13 @@ fmt.Println()
 
 // ── Step 2: Governance ──
 steps++
-fmt.Printf("── Step %d/%d: Governance (agentguard.yaml) ──\n", steps, total)
+fmt.Printf("── Step %d/%d: Governance (chitin.yaml) ──\n", steps, total)
 configPath := findGovernanceConfig()
 if configPath == "" {
-fmt.Print("  No agentguard.yaml found. Create default? [Y/n] ")
+fmt.Print("  No chitin.yaml found. Create default? [Y/n] ")
 if confirm(reader) {
 writeDefaultGovernanceConfig()
-configPath = "agentguard.yaml"
+configPath = "chitin.yaml"
 }
 }
 if configPath != "" {
@@ -469,7 +469,7 @@ return strings.TrimRight(line, "\r\n")
 }
 
 func writeDefaultGovernanceConfig() {
-policy := `# agentguard.yaml — ShellForge governance policy
+policy := `# chitin.yaml — ShellForge governance policy
 # Mode: enforce (block violations) or monitor (log only)
 mode: enforce
 
@@ -497,10 +497,10 @@ policies:
     action: deny
     message: "Access to secrets/keys is not allowed"
 `
-if err := os.WriteFile("agentguard.yaml", []byte(policy), 0o644); err != nil {
-fmt.Printf("  ⚠ Could not create agentguard.yaml: %s\n", err)
+if err := os.WriteFile("chitin.yaml", []byte(policy), 0o644); err != nil {
+fmt.Printf("  ⚠ Could not create chitin.yaml: %s\n", err)
 } else {
-fmt.Println("  ✓ agentguard.yaml created (enforce mode, 3 policies)")
+fmt.Println("  ✓ chitin.yaml created (enforce mode, 3 policies)")
 }
 }
 
@@ -532,7 +532,7 @@ type driverConfig struct {
 	binary       string   // CLI binary name
 	buildCmd     func(string) []string // build command args from prompt
 	interactive  []string // args when no prompt given
-	hasHooks     bool     // whether AgentGuard hooks are configured for this driver
+	hasHooks     bool     // whether Chitin hooks are configured for this driver
 	initHint     string   // command to set up hooks
 }
 
@@ -542,28 +542,28 @@ var drivers = map[string]driverConfig{
 		buildCmd: func(p string) []string { return []string{"--dangerously-skip-permissions", "-p", p} },
 		interactive: []string{},
 		hasHooks:    true,
-		initHint:    "agentguard claude-init",
+		initHint:    "chitin claude-init",
 	},
 	"copilot": {
 		binary:   "copilot-cli",
 		buildCmd: func(p string) []string { return []string{"--prompt", p} },
 		interactive: []string{},
 		hasHooks:    true,
-		initHint:    "agentguard copilot-init",
+		initHint:    "chitin copilot-init",
 	},
 	"codex": {
 		binary:   "codex",
 		buildCmd: func(p string) []string { return []string{"--quiet", "--prompt", p} },
 		interactive: []string{},
 		hasHooks:    true,
-		initHint:    "agentguard codex-init",
+		initHint:    "chitin codex-init",
 	},
 	"gemini": {
 		binary:   "gemini",
 		buildCmd: func(p string) []string { return []string{"--prompt", p} },
 		interactive: []string{},
 		hasHooks:    false,
-		initHint:    "agentguard gemini-init",
+		initHint:    "chitin gemini-init",
 	},
 	"goose": {
 		binary: "goose",
@@ -581,7 +581,7 @@ var drivers = map[string]driverConfig{
 		},
 		interactive: []string{},
 		hasHooks:    false,
-		initHint:    "agentguard openclaw-init",
+		initHint:    "chitin openclaw-init",
 	},
 	"nemoclaw": {
 		binary: "openclaw",
@@ -590,7 +590,7 @@ var drivers = map[string]driverConfig{
 		},
 		interactive: []string{},
 		hasHooks:    false,
-		initHint:    "agentguard nemoclaw-init",
+		initHint:    "chitin nemoclaw-init",
 	},
 }
 
@@ -612,7 +612,7 @@ func cmdRun(driver, prompt string) {
 	// Check governance config exists
 	configPath := findGovernanceConfig()
 	if configPath == "" {
-		fmt.Fprintln(os.Stderr, "ERROR: agentguard.yaml not found")
+		fmt.Fprintln(os.Stderr, "ERROR: chitin.yaml not found")
 		fmt.Fprintln(os.Stderr, "Run: shellforge setup")
 		os.Exit(1)
 	}
@@ -641,7 +641,7 @@ func cmdRun(driver, prompt string) {
 	cmd.Stderr = os.Stderr
 	cmd.Env = os.Environ()
 
-	// For Goose/OpenClaw/NemoClaw: set governed shell so ALL commands go through AgentGuard
+	// For Goose/OpenClaw/NemoClaw: set governed shell so ALL commands go through Chitin
 	if driver == "goose" || driver == "openclaw" || driver == "nemoclaw" {
 		sfBin, _ := exec.LookPath("shellforge")
 		if sfBin != "" {
@@ -742,6 +742,18 @@ fmt.Fprintf(os.Stderr, "Using Anthropic API (model: %s, thinking budget: %d toke
 fmt.Fprintf(os.Stderr, "Using Anthropic API (model: %s)\n", model)
 }
 provider = p
+case "deepseek":
+apiKey := os.Getenv("DEEPSEEK_API_KEY")
+if apiKey == "" {
+fmt.Fprintln(os.Stderr, "Error: DEEPSEEK_API_KEY environment variable not set")
+os.Exit(1)
+}
+model := os.Getenv("DEEPSEEK_MODEL")
+if model == "" {
+model = "deepseek-chat"
+}
+fmt.Fprintf(os.Stderr, "Using DeepSeek API (model: %s)\n", model)
+provider = llm.NewDeepSeekProvider(apiKey, model)
 default:
 // Legacy Ollama path
 mustOllama()
@@ -749,13 +761,13 @@ mustOllama()
 
 cfg := agent.LoopConfig{
 Agent:       "prototype-agent",
-System:      "You are a senior engineer. Complete the requested task using available tools. Read files, write files, run commands, search code. Be precise.",
+System:      "You are a senior engineer. You MUST write code using write_file. Read only what you need (3-4 files max), then write the implementation. Do not just analyze — produce working code files. NEVER delete files you have written. NEVER use rm on files you created. If tests fail, fix the code — do not delete it.",
 UserPrompt:  prompt,
 Model:       ollama.Model,
-MaxTurns:    15,
-TimeoutMs:   180_000,
+MaxTurns:    30,
+TimeoutMs:   300_000,
 OutputDir:   "outputs/logs",
-TokenBudget: 3000,
+TokenBudget: 6000,
 Provider:    provider,
 }
 
@@ -998,7 +1010,7 @@ fmt.Printf("  %d DAG(s) found\n", len(entries))
 // Check for governance
 configPath := findGovernanceConfig()
 if configPath == "" {
-fmt.Println("⚠ No agentguard.yaml — run 'shellforge setup' first")
+fmt.Println("⚠ No chitin.yaml — run 'shellforge setup' first")
 return
 }
 fmt.Println("✓ Governance config found")
@@ -1124,9 +1136,9 @@ cmd.Run()
 } else {
 fmt.Println("  DefenseClaw not installed — running basic integrity check")
 fmt.Printf("  Scanning %s for agent configs...\n", dir)
-// Basic: check for agentguard.yaml, list agent files
-if _, err := os.Stat("agentguard.yaml"); err == nil {
-fmt.Println("  ✓ agentguard.yaml found")
+// Basic: check for chitin.yaml, list agent files
+if _, err := os.Stat("chitin.yaml"); err == nil {
+fmt.Println("  ✓ chitin.yaml found")
 }
 entries, _ := filepath.Glob(filepath.Join(dir, "agents", "*.ts"))
 var goEntries []string
@@ -1146,7 +1158,7 @@ fmt.Println("  Install defenseclaw for full supply chain scanning")
 func mustGovernance() *governance.Engine {
 configPath := findGovernanceConfig()
 if configPath == "" {
-fmt.Fprintln(os.Stderr, "ERROR: agentguard.yaml not found")
+fmt.Fprintln(os.Stderr, "ERROR: chitin.yaml not found")
 os.Exit(1)
 }
 eng, err := governance.NewEngine(configPath)
@@ -1154,7 +1166,7 @@ if err != nil {
 fmt.Fprintf(os.Stderr, "ERROR: governance config: %s\n", err)
 os.Exit(1)
 }
-fmt.Printf("[🛡️ AgentGuard] governance loaded — mode: %s, %d policies\n", eng.Mode, len(eng.Policies))
+fmt.Printf("[🛡️ Chitin] governance loaded — mode: %s, %d policies\n", eng.Mode, len(eng.Policies))
 return eng
 }
 
@@ -1166,7 +1178,7 @@ os.Exit(1)
 }
 
 func findGovernanceConfig() string {
-for _, c := range []string{"agentguard.yaml", filepath.Join("..", "agentguard.yaml")} {
+for _, c := range []string{"chitin.yaml", filepath.Join("..", "chitin.yaml")} {
 if _, err := os.Stat(c); err == nil {
 return c
 }

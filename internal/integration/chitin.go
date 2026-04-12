@@ -9,42 +9,42 @@ import (
 "strings"
 )
 
-// AgentGuardKernel — the real AgentGuard Go kernel integration.
+// ChitinKernel — the real Chitin Go kernel integration.
 // When the full kernel is installed, ShellForge delegates policy evaluation
 // to the production-grade engine with blast radius analysis, persona-aware
 // decisions, invariant checking, and sub-millisecond evaluation.
 //
 // The kernel lives at: github.com/chitinhq/chitin/go
-// Install: go install github.com/chitinhq/chitin/go/cmd/agentguard@latest
+// Install: go install github.com/chitinhq/chitin/go/cmd/chitin@latest
 //
 // Without the kernel, ShellForge uses its built-in YAML evaluator (internal/governance).
 // With the kernel, we get: deny/allow/escalate/intervene decisions, corrected commands,
 // blast radius scoring, and structured audit events.
-type AgentGuardKernel struct {
+type ChitinKernel struct {
 enabled bool
 binPath string
 }
 
-func NewAgentGuardKernel() *AgentGuardKernel {
-// Check for installed agentguard binary
-path, err := exec.LookPath("agentguard")
+func NewChitinKernel() *ChitinKernel {
+// Check for installed chitin binary
+path, err := exec.LookPath("chitin")
 if err != nil {
 // Check workspace location
-workspace := os.Getenv("AGENTGUARD_WORKSPACE")
+workspace := os.Getenv("CHITIN_WORKSPACE")
 if workspace == "" {
-workspace = filepath.Join(os.Getenv("HOME"), "agentguard-workspace")
+workspace = filepath.Join(os.Getenv("HOME"), "chitin-workspace")
 }
-candidate := filepath.Join(workspace, "agent-guard", "go", "agentguard")
+candidate := filepath.Join(workspace, "chitin", "go", "chitin")
 if _, err := os.Stat(candidate); err == nil {
-return &AgentGuardKernel{enabled: true, binPath: candidate}
+return &ChitinKernel{enabled: true, binPath: candidate}
 }
-return &AgentGuardKernel{enabled: false}
+return &ChitinKernel{enabled: false}
 }
-return &AgentGuardKernel{enabled: true, binPath: path}
+return &ChitinKernel{enabled: true, binPath: path}
 }
 
-func (k *AgentGuardKernel) Available() bool { return k.enabled }
-func (k *AgentGuardKernel) Name() string    { return "agentguard-kernel" }
+func (k *ChitinKernel) Available() bool { return k.enabled }
+func (k *ChitinKernel) Name() string    { return "chitin-kernel" }
 
 // HookInput matches the kernel's pkg/hook.HookInput format.
 type HookInput struct {
@@ -62,12 +62,12 @@ Suggestion       string `json:"suggestion,omitempty"`
 CorrectedCommand string `json:"correctedCommand,omitempty"`
 }
 
-// Evaluate runs a tool call through the full AgentGuard kernel.
+// Evaluate runs a tool call through the full Chitin kernel.
 // This gives us: blast radius analysis, persona-aware decisions,
 // invariant checking, and corrected command suggestions.
-func (k *AgentGuardKernel) Evaluate(tool string, params map[string]string) (*HookResponse, error) {
+func (k *ChitinKernel) Evaluate(tool string, params map[string]string) (*HookResponse, error) {
 if !k.enabled {
-return nil, fmt.Errorf("agentguard kernel not installed")
+return nil, fmt.Errorf("chitin kernel not installed")
 }
 
 input := HookInput{
@@ -79,11 +79,11 @@ Event:     "preToolUse",
 
 inputJSON, _ := json.Marshal(input)
 
-// The kernel reads from AGENTGUARD_HOOK_INPUT env var (Copilot mode)
+// The kernel reads from CHITIN_HOOK_INPUT env var (Copilot mode)
 // or stdin (Claude Code mode). We use env var.
 cmd := exec.Command(k.binPath, "hook", "copilot")
 cmd.Env = append(os.Environ(),
-"AGENTGUARD_HOOK_INPUT="+string(inputJSON),
+"CHITIN_HOOK_INPUT="+string(inputJSON),
 )
 out, err := cmd.Output()
 if err != nil {
@@ -135,7 +135,7 @@ return data
 }
 
 // Version returns the kernel version.
-func (k *AgentGuardKernel) Version() string {
+func (k *ChitinKernel) Version() string {
 if !k.enabled {
 return "not installed"
 }

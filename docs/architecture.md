@@ -2,7 +2,7 @@
 
 ## Overview
 
-ShellForge is a single Go binary (~7.5MB) that provides governed AI agent execution. Its core value is **governance** — every agent driver, whether a CLI tool, browser session, or local model, runs through AgentGuard policy enforcement on every action.
+ShellForge is a single Go binary (~7.5MB) that provides governed AI agent execution. Its core value is **governance** — every agent driver, whether a CLI tool, browser session, or local model, runs through Chitin policy enforcement on every action.
 
 ## Entry Points
 
@@ -56,7 +56,7 @@ ShellForge supports three classes of agent driver, all governed uniformly:
 └─────────────────────────────────────────────────────────────┘
          │ every tool call
     ═════╪═════════════════
-    ║  AgentGuard Kernel  ║
+    ║  Chitin Kernel  ║
     ║  allow · deny · audit║
     ═════╪═════════════════
          │ approved
@@ -118,13 +118,13 @@ ShellForge is one layer in a three-part platform:
 │  Coordination — shared memory, model routing,       │
 │  budget-aware dispatch, priority signaling           │
 ├─────────────────────────────────────────────────────┤
-│  AgentGuard                                         │
+│  Chitin                                         │
 │  Governance — policy enforcement, telemetry,         │
 │  invariants, compliance                              │
 └─────────────────────────────────────────────────────┘
 ```
 
-ShellForge orchestrates. Octi Pulpo coordinates. AgentGuard governs.
+ShellForge orchestrates. Octi Pulpo coordinates. Chitin governs.
 
 ## Cost-Aware Routing
 
@@ -168,7 +168,7 @@ internal/
 │   └── repl.go     # Interactive REPL — persistent history, color output, shell escapes
 ├── ralph/          # Ralph Loop — stateless-iterative multi-task execution
 │   └── loop.go     # PICK → IMPLEMENT → VALIDATE → COMMIT → RESET cycle
-├── governance/     # agentguard.yaml parser + policy engine
+├── governance/     # chitin.yaml parser + policy engine
 ├── ollama/         # Ollama HTTP client (chat, generate)
 ├── tools/          # 8 tool implementations (read/write/edit/glob/grep/shell/ls/find) + RTK wrapper
 ├── engine/         # Pluggable engine interface (Goose, OpenClaw, OpenCode)
@@ -178,7 +178,7 @@ internal/
 ├── normalizer/     # Canonical Action Representation
 ├── correction/     # Denial tracking + escalation
 ├── intent/         # Format-agnostic intent parsing
-└── integration/    # RTK, OpenShell, DefenseClaw, TurboQuant, AgentGuard
+└── integration/    # RTK, OpenShell, DefenseClaw, TurboQuant, Chitin
 ```
 
 ## Engine Architecture
@@ -197,7 +197,7 @@ ShellForge uses a pluggable engine system:
 
 ```
 User Request → Entry Point (chat/agent/ralph/run/serve)
-  → Agent Loop → Tool Call → Governance Check (agentguard.yaml)
+  → Agent Loop → Tool Call → Governance Check (chitin.yaml)
     → ALLOW → Execute Tool → Return Result
     → DENY  → Log Violation → Correction Feedback → Retry
 ```
@@ -208,6 +208,6 @@ The format-agnostic intent parser handles tool calls from any LLM output format 
 
 All layers run on Mac M4:
 - Ollama uses Metal for GPU acceleration
-- RTK, AgentGuard, ShellForge are native arm64 binaries
+- RTK, Chitin, ShellForge are native arm64 binaries
 - OpenShell runs inside Docker/Colima (Linux VM for Landlock)
 - DefenseClaw installs via pip or source build

@@ -6,11 +6,11 @@ import (
 	"testing"
 )
 
-// writeConfig writes a temporary agentguard.yaml and returns its path.
+// writeConfig writes a temporary chitin.yaml and returns its path.
 func writeConfig(t *testing.T, content string) string {
 	t.Helper()
 	dir := t.TempDir()
-	path := filepath.Join(dir, "agentguard.yaml")
+	path := filepath.Join(dir, "chitin.yaml")
 	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
 		t.Fatalf("writeConfig: %v", err)
 	}

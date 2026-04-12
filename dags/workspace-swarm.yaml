@@ -1,4 +1,4 @@
-# workspace-swarm.yaml — AgentGuard workspace swarm
+# workspace-swarm.yaml — Chitin workspace swarm
 # Replaces server/deploy.sh + cron + queue.txt
 # Same agents, governed by ShellForge, orchestrated by Dagu.
 
@@ -6,21 +6,21 @@ schedule: "0 */3 * * *"
 
 steps:
   - name: kernel-qa
-    command: shellforge run copilot "Run the test suite in agent-guard. Report pass/fail counts and any new failures."
-    dir: agent-guard
+    command: shellforge run copilot "Run the test suite in chitin. Report pass/fail counts and any new failures."
+    dir: chitin
 
   - name: cloud-qa
-    command: shellforge run copilot "Run the test suite in agentguard-cloud. Report pass/fail counts."
-    dir: agentguard-cloud
+    command: shellforge run copilot "Run the test suite in chitin-cloud. Report pass/fail counts."
+    dir: chitin-cloud
 
   - name: triage-ci
     command: shellforge run claude "Check for failing CI runs using 'gh run list --status failure'. For each failure, read the log and create an issue with the root cause."
-    dir: agent-guard
+    dir: chitin
     depends:
       - kernel-qa
 
   - name: pr-review
     command: shellforge run claude "Review all open PRs using 'gh pr list'. For each PR, check the diff for bugs and style issues. Approve or request changes."
-    dir: agent-guard
+    dir: chitin
     depends:
       - kernel-qa

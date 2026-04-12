@@ -48,7 +48,7 @@ steps:
     dir: /path/to/your/repo
 ```
 
-Every `shellforge agent` call is governed by `agentguard.yaml` in the target directory.
+Every `shellforge agent` call is governed by `chitin.yaml` in the target directory.
 
 ## Dagu Dashboard
 

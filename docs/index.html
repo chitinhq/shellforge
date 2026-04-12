@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ShellForge — Forge Local AI Agents, Governed.</title>
-  <meta name="description" content="Local governed agent swarm powered by Ollama + AgentGuard. Run autonomous AI agents on your Mac with zero cloud dependency.">
+  <meta name="description" content="Local governed agent swarm powered by Ollama + Chitin. Run autonomous AI agents on your Mac with zero cloud dependency.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
   <style>
     :root {
@@ -434,7 +434,7 @@
         <span class="output">  ✓ Ollama running</span><br>
         <span class="output">  ✓ Model ready: qwen3:8b</span><br>
         <span class="output">── Step 2/6: Governance ──</span><br>
-        <span class="output">  ✓ agentguard.yaml created (enforce, 3 policies)</span><br>
+        <span class="output">  ✓ chitin.yaml created (enforce, 3 policies)</span><br>
         <span class="output">── Step 3/6: Dagu ──</span><br>
         <span class="output">  ✓ Dagu installed</span><br>
         <span class="accent">  Setup Complete</span><br>
@@ -453,7 +453,7 @@
         <span class="accent">done — 4 turns, 4 tool calls, 1 denial corrected</span><br>
         <br>
         <span class="prompt">$</span> <span class="cmd">shellforge run claude <span class="blue">"review open PRs"</span></span><br>
-        <span class="accent">[governed] Claude Code with AgentGuard hooks</span>
+        <span class="accent">[governed] Claude Code with Chitin hooks</span>
       </div>
     </div>
   </div>
@@ -472,8 +472,8 @@
       </div>
       <div class="card">
         <div class="card-icon">🛡️</div>
-        <h3>AgentGuard Governance</h3>
-        <p>Policy-as-code in agentguard.yaml. Block force-push, restrict file writes, enforce timeouts. Monitor mode → enforce mode when ready.</p>
+        <h3>Chitin Governance</h3>
+        <p>Policy-as-code in chitin.yaml. Block force-push, restrict file writes, enforce timeouts. Monitor mode → enforce mode when ready.</p>
       </div>
       <div class="card">
         <div class="card-icon">⚡</div>
@@ -502,7 +502,7 @@
 <!-- ─── Stack ─── -->
 <section class="stack" id="stack">
   <div class="container">
-    <h2 class="section-title">Where AgentGuard Lives</h2>
+    <h2 class="section-title">Where Chitin Lives</h2>
     <p class="section-sub">Between every tool call and your environment. The gatekeeper.</p>
     <div class="stack-diagram">
       <div class="stack-layer">
@@ -537,7 +537,7 @@
       <div class="stack-connector">↓</div>
       <div class="stack-layer" style="border-color: var(--green); border-width: 2px; background: rgba(81,207,102,0.05);">
         <span class="layer-tag" style="background: rgba(81,207,102,0.15); color: var(--green);">GOVERN</span>
-        <span class="layer-name">🛡️ AgentGuard — The Gateway</span>
+        <span class="layer-name">🛡️ Chitin — The Gateway</span>
         <span class="layer-desc">allow / deny / audit every action before it reaches your machine</span>
       </div>
       <div class="stack-connector">↓</div>
@@ -652,7 +652,7 @@
       <div class="stack-connector">↓ agent wants to: write file, run shell, push git</div>
       <div class="stack-layer" style="border-color: var(--green); border-width: 2px; background: rgba(81,207,102,0.05);">
         <span class="layer-tag" style="min-width: 80px; background: rgba(81,207,102,0.15); color: var(--green);">GOVERN</span>
-        <span class="layer-name">🛡️ AgentGuard — <strong>The Gateway</strong></span>
+        <span class="layer-name">🛡️ Chitin — <strong>The Gateway</strong></span>
         <span class="layer-desc">Policy-as-code — allow/deny every action before it touches your environment</span>
       </div>
       <div class="stack-connector">↓ approved actions only</div>
@@ -689,7 +689,7 @@
       </div>
       <div class="eco-card">
         <div class="eco-logo">🛡️</div>
-        <h4>AgentGuard</h4>
+        <h4>Chitin</h4>
         <p>Governance kernel<br><strong>Enforces policy</strong></p>
       </div>
       <div class="eco-card">

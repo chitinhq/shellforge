@@ -1,6 +1,6 @@
 # multi-driver-swarm.yaml — Multi-driver agent swarm
 # Uses different CLI drivers for different tasks.
-# Each driver is governed by AgentGuard via hooks.
+# Each driver is governed by Chitin via hooks.
 #
 # Run: dagu start dags/multi-driver-swarm.yaml
 

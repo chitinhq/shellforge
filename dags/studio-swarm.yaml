@@ -1,4 +1,4 @@
-# studio-swarm.yaml — AgentGuard Studio project swarm
+# studio-swarm.yaml — Chitin Studio project swarm
 # Continuous development agents for Studio projects.
 # Customize the REPO_DIR and prompts for each project.
 #

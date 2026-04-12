@@ -12,7 +12,7 @@ outputs/
 .env
 
 # Agent state
-.agentguard/
+.chitin/
 .chitin/
 .claude/settings.json
 

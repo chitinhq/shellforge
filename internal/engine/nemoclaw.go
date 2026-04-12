@@ -70,10 +70,10 @@ func (e *NemoClawEngine) Run(task Task) (*Result, error) {
 	// Non-interactive for headless execution
 	args = append(args, "--non-interactive")
 
-	// Set up AgentGuard governance + NemoClaw-specific env
+	// Set up Chitin governance + NemoClaw-specific env
 	env := append(os.Environ(),
-		"AGENTGUARD_POLICY=agentguard.yaml",
-		"AGENTGUARD_MODE=enforce",
+		"CHITIN_POLICY=chitin.yaml",
+		"CHITIN_MODE=enforce",
 		"NEMOCLAW_SANDBOX=1",
 	)
 

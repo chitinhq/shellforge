@@ -1,6 +1,6 @@
 # sdlc-swarm.yaml — Daily SDLC agent swarm
 # Runs QA, reporting, and security agents on a schedule.
-# Each step is governed by ShellForge (agentguard.yaml).
+# Each step is governed by ShellForge (chitin.yaml).
 #
 # Install Dagu: brew install dagu (Mac) or curl -sL https://dagu.sh | sh (Linux)
 # Run: dagu start dags/sdlc-swarm.yaml

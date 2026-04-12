@@ -16,7 +16,7 @@ class ShellForgeAgent(BaseInstalledAgent):
     """ShellForge — governed agent runtime for Terminal Bench.
 
     Installs the ShellForge Go binary + Ollama inside the container,
-    then runs `shellforge agent` with AgentGuard governance on every task.
+    then runs `shellforge agent` with Chitin governance on every task.
     """
 
     SHELLFORGE_VERSION = "latest"
@@ -53,7 +53,7 @@ class ShellForgeAgent(BaseInstalledAgent):
 
         # Copy governance policy
         self.exec_as_agent(
-            "cp /tmp/shellforge/agentguard.yaml /home/agent/agentguard.yaml"
+            "cp /tmp/shellforge/chitin.yaml /home/agent/chitin.yaml"
         )
 
         # Start Ollama and pull model
@@ -67,7 +67,7 @@ class ShellForgeAgent(BaseInstalledAgent):
         escaped = instruction.replace("'", "'\\''")
 
         # Run shellforge agent with the task instruction
-        # Governance (agentguard.yaml) wraps every tool call
+        # Governance (chitin.yaml) wraps every tool call
         result = environment.exec(
             "cd /home/agent && shellforge agent '" + escaped + "'",
             timeout=600,

@@ -131,15 +131,15 @@ else
   fi
 fi
 
-# ── 4. AgentGuard Kernel ──
-header "4/8  🛡️  AgentGuard Kernel (Policy Enforcement)"
-if command -v agentguard &>/dev/null; then
-  ok "AgentGuard kernel $(agentguard --version 2>/dev/null || echo 'installed')"
-elif [[ -f agentguard.yaml ]]; then
-  ok "Using built-in YAML evaluator (agentguard.yaml found)"
-  info "For full kernel (blast radius, personas): go install github.com/chitinhq/chitin/go/cmd/agentguard@latest"
+# ── 4. Chitin Kernel ──
+header "4/8  🛡️  Chitin Kernel (Policy Enforcement)"
+if command -v chitin &>/dev/null; then
+  ok "Chitin kernel $(chitin --version 2>/dev/null || echo 'installed')"
+elif [[ -f chitin.yaml ]]; then
+  ok "Using built-in YAML evaluator (chitin.yaml found)"
+  info "For full kernel (blast radius, personas): go install github.com/chitinhq/chitin/go/cmd/chitin@latest"
 else
-  warn "No agentguard.yaml found — governance disabled"
+  warn "No chitin.yaml found — governance disabled"
 fi
 
 # ── 5. OpenCode ──

@@ -9,7 +9,7 @@ import (
 "time"
 )
 
-// OpenCodeEngine wraps the opencode-ai CLI with AgentGuard governance.
+// OpenCodeEngine wraps the opencode-ai CLI with Chitin governance.
 // OpenCode is a Go-native AI coding agent with built-in tool use.
 // We run it as a subprocess and capture its structured output.
 type OpenCodeEngine struct{}
@@ -35,10 +35,10 @@ args := []string{
 "--model", task.Model,
 }
 
-// Set up AgentGuard as an OpenCode plugin via env
+// Set up Chitin as an OpenCode plugin via env
 env := append(os.Environ(),
-"AGENTGUARD_POLICY=agentguard.yaml",
-"AGENTGUARD_MODE=enforce",
+"CHITIN_POLICY=chitin.yaml",
+"CHITIN_MODE=enforce",
 fmt.Sprintf("OPENCODE_TIMEOUT=%d", task.Timeout),
 )
 
