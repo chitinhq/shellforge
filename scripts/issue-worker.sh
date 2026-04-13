@@ -170,16 +170,27 @@ Working directory: ${clone_dir}"
   # Success — clear attempt counter
   clear_attempts "$issue_key"
 
+  # Avoid double-prefixing when the issue title already carries a
+  # conventional-commit prefix (closes chitinhq/shellforge#134).
+  case "$title" in
+    fix:*|feat:*|chore:*|docs:*|test:*|refactor:*|perf:*|arch:*|build:*|ci:*|style:*|revert:*)
+      pr_title="$title"
+      commit_subject="address #${num} — ${title}" ;;
+    *)
+      pr_title="fix: $title"
+      commit_subject="fix: address #${num} — ${title}" ;;
+  esac
+
   # Commit and push
   git -C "$clone_dir" add -A
-  git -C "$clone_dir" commit -m "fix: address #${num} — ${title}
+  git -C "$clone_dir" commit -m "${commit_subject}
 
 Co-Authored-By: ForgeCode <forgecode@chitinhq.com>"
   git -C "$clone_dir" push -u origin "$branch" 2>/dev/null
 
   # Create PR
   gh pr create -R "$repo" \
-    --title "fix: ${title}" \
+    --title "$pr_title" \
     --body "Closes #${num}
 
 ## Summary
